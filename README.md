@@ -1,2 +1,2 @@
 # SmartCamera
-A smart camera project being developed for Sony
+A smart camera project 
