@@ -1,2 +1,2 @@
 # SmartCamera
-A smart camera project 
+Project being developed for Sony in Lund. The purpose of the application is to detect people in a room using machine learning and it's camera. The application will upload taken images to Google Drive and tag the images with a proper tag, such as "people in the room" or "people empty"
