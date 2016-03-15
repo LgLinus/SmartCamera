@@ -6,15 +6,10 @@ import android.content.ContextWrapper;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -22,6 +17,7 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
 import java.io.File;
@@ -39,7 +35,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     CameraBridgeViewBase camera_view;
 
     // Current image
-    Mat current_frame;
+    Mat current_frame = null;
+    Mat old_frame = null;
+    boolean first = true;
+    Mat test;
+    int current=0;
     /* End of camera variables */
 
     Button btnCapture;
@@ -85,11 +85,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         // path to /data/data/yourapp/app_data/imageDir
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
         // Create imageDir
-        File mypath=new File(directory,filename+".png");
+        File file=new File(directory,filename+".png");
         FileOutputStream fos = null;
         try
         {
-            fos = new FileOutputStream(mypath);
+            fos = new FileOutputStream(file);
             // Use the compress method on the BitMap object to write image to the OutputStream
             resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.close();
@@ -102,7 +102,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
         }
 
-        this.uploadFile(mypath,"filepath","testing","blabla");
+        this.uploadFile(file, "filepath", "testing", "blabla");
 
     }
 
@@ -134,11 +134,22 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
      */
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        Mat res;
-        res = inputFrame.gray();
 
-        this.current_frame = res;
-        return res;
+        if(first){
+            first = false;
+            old_frame = inputFrame.gray();
+        }
+        else
+            current_frame = inputFrame.gray();
+        if(old_frame!=null && current_frame!=null)
+        {
+            Log.d("crash", "pre crash 2");
+            Core.absdiff(old_frame,current_frame, test);
+        }
+
+        Log.d("crash","pre crash 4");
+        Log.d("crash","pre crash 5");
+        return test;
     }
 
 
