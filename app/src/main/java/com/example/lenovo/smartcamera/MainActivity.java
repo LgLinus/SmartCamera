@@ -19,6 +19,8 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,9 +42,13 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     boolean first = true;
     Mat test;
     int current=0;
+    boolean edgeDetection = false;
+    int kernel_size = 4;
     /* End of camera variables */
 
+    Button btn_edge_detection, btn_plus_gauss, btn_neg_gauss;
     Button btnCapture;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +66,25 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
             @Override
             public void onClick(View v) {
                 saveImage();
+            }
+        });
+        btn_edge_detection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                edgeDetection = !edgeDetection;
+            }
+        });
+        btn_plus_gauss.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                kernel_size*=2;
+            }
+        });
+
+        btn_neg_gauss.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                kernel_size/=2;
             }
         });
     }
@@ -109,6 +134,9 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     private void initiateComponents(){
 
         btnCapture = (Button)findViewById(R.id.btnCapture);
+        btn_edge_detection = (Button)findViewById(R.id.btnEdges);
+        btn_plus_gauss = (Button)findViewById(R.id.btnPlusgauss);
+        btn_neg_gauss = (Button)findViewById(R.id.btnNegGauss);
 
         camera_view = (CameraBridgeViewBase)findViewById(R.id.camera_view);
 
@@ -134,18 +162,45 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
      */
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-
         if(first){
             first = false;
-            old_frame = inputFrame.gray();
+            old_frame = inputFrame.rgba();
+            test = old_frame;
         }
         else
-            current_frame = inputFrame.gray();
+            current_frame = inputFrame.rgba();
         if(old_frame!=null && current_frame!=null)
         {
             Log.d("crash", "pre crash 2");
-            Core.absdiff(old_frame,current_frame, test);
-        }
+            Mat bg = new Mat();
+            Mat cg= new Mat();
+            test = new Mat();
+
+            // cvT Color works
+            Imgproc.cvtColor(old_frame, bg, Imgproc.COLOR_BGR2GRAY);
+            Imgproc.cvtColor(current_frame, cg, Imgproc.COLOR_BGR2GRAY);
+            Imgproc.cvtColor(current_frame, test, Imgproc.COLOR_BGR2GRAY);
+
+            Log.d("crash", "pre crash 3");
+            // TODO
+            Mat test2 = new Mat();
+
+            Imgproc.GaussianBlur(current_frame,test,new Size(kernel_size+1,kernel_size+1),0);
+            int lowerThreshold = 55; //155
+            double ratio = 1.10; // 1.25
+            if(edgeDetection)
+                Imgproc.Canny(test, test, lowerThreshold, (int)lowerThreshold*(ratio));
+            // Core.absdiff(bg,cg, test);
+
+            Log.d("crash", "pre crash 3");
+
+           // Imgproc.cvtColor(test2, test, Imgproc.COLOR_BGR2GRAY);
+            // Convert to BW
+          //  Imgproc.threshold(test, test, 35, 255, Imgproc.THRESH_BINARY_INV);
+
+            Log.d("crash", "pre crash 41213");
+            // TODO size needs to be odd positive number
+            }
 
         Log.d("crash","pre crash 4");
         Log.d("crash","pre crash 5");
@@ -185,6 +240,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
                 case LoaderCallbackInterface.SUCCESS:
                 {
                     Log.d("init", "OpenCV loaded successfully");
+                    // Load native libs after OpenCV initialization
                     camera_view.enableView();
                 }
             }

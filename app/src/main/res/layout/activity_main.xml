@@ -8,13 +8,38 @@
     android:orientation="vertical"
     android:fitsSystemWindows="true"
     tools:context="com.example.lenovo.smartcamera.MainActivity">
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnCapture"
-        android:text="Take photo"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnCapture"
+            android:text="Take photo"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnEdges"
+            android:text="Edge detection"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnPlusgauss"
+            android:text="+ Gauss"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnNegGauss"
+            android:text="- Gauss"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:weightSum="2">
     <org.opencv.android.JavaCameraView
-        android:layout_width="fill_parent"
+        android:layout_width="0dp"
         android:layout_height="fill_parent"
+        android:layout_weight="1"
         android:id="@+id/camera_view"/>
+    </LinearLayout>
 </LinearLayout>
