@@ -186,7 +186,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
             Mat test2 = new Mat();
 
             Imgproc.GaussianBlur(current_frame,test,new Size(kernel_size+1,kernel_size+1),0);
-            int lowerThreshold = 55; //155
+            int lowerThreshold = 55 ; //155
             double ratio = 1.10; // 1.25
             if(edgeDetection)
                 Imgproc.Canny(test, test, lowerThreshold, (int)lowerThreshold*(ratio));
