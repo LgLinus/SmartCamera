@@ -50,10 +50,6 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     CameraBridgeViewBase camera_view;
     int counter=-1;
     // Current image
-    Mat current_frame = null;
-    Mat old_frame,older_frame;
-    Mat output_frame;
-    Mat fg,bg;
     int kernel_size = 4;
     int state = 0;
     public static final int NEUTRAL = 0;
@@ -61,12 +57,22 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     public static final int MOTION_DETECTION = 2;
     /* End of camera variables */
 
+    Mat current_frame = null;
+    Mat old_frame,older_frame;
+    Mat output_frame;
+    Mat fg,bg;
+    private final int BUFFERT_SIZE = 3;
+    Mat[] buffert;
     /* GUI elements */
     Button btn_edge_detection, btn_plus_gauss, btn_neg_gauss;
     Button btnCapture;
     Button btn_motion_detection;
     CheckBox cb_people_in_room;
     AlertDialog alertDialog;
+
+    final int ORIGINAL = 0;
+    final int ABSDIFF = 1;
+    public static final int BUFFERUPDATESECONDS = 5;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -76,7 +82,6 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         showTimerDialog();
         initiateComponents();
         initiateListeners();
-
 
 
     }
@@ -99,9 +104,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
                 try {
                     setTimer(Integer.parseInt(etTimer.getText().toString()));
+                    setTimerMedianfilter();
                     dialog.dismiss();
                 } catch (NumberFormatException e) {
                     Toast.makeText(getApplicationContext(), "Error converting time, make sure there's only numbers in the dialog", Toast.LENGTH_LONG).show();
+                    showTimerDialog();
                 }
             }
         });
@@ -140,7 +147,26 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
             }
         };
 
-        new Timer().scheduleAtFixedRate(task, 1000, seconds*1000);
+        new Timer().scheduleAtFixedRate(task, seconds * 1000, seconds * 1000);
+    }
+
+    private void setTimerMedianfilter(){
+
+        TimerTask task = new TimerTask(){
+            @Override
+            public void run(){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Mat temp = current_frame.clone();
+                        addBuffert(temp);
+                        Log.d("MAINACTIVITY", "added image to buffer");
+                    }
+                });
+            }
+        };
+
+        new Timer().scheduleAtFixedRate(task, 1000, 1000); /// 4
     }
 
     /**
@@ -148,17 +174,37 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
      */
     public void saveImage(){
 
-        Mat matrix = current_frame;
+        Mat matrix,current_low_res_frame;
+
+        // Acquire medaian image
+        matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(4,4,buffert));
+
+        // Resize current image
+        current_low_res_frame = ImageManipulation.resizeImage(4, 4, current_frame);
+        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
+
+        Mat output = new Mat(matrix.width(),matrix.height(),CvType.CV_8UC1);
+        // Apply absdiff on new img + median image
+        ImageManipulation.useAbsDiff(matrix, current_low_res_frame, output);
+
+        uploadMatrix(saveMatrix(output,1),1);
+        uploadMatrix(saveMatrix(current_low_res_frame,0),0);
+        saveMatrix(matrix,2);
         // Create bitmap from image
+       matrix.release();
+        output.release();
+    }
+
+    public File saveMatrix(Mat matrix, int code){
         Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(matrix, resultBitmap);
 
         Date date = new Date();
-
+        Log.d("MAINACTIVITY","code: " + code);
         SimpleDateFormat ft =
-                new SimpleDateFormat ("yyyy/mm/dd_hh/mm/ss");
+                new SimpleDateFormat ("yyyy/mm/dd_hh:mm:ss");
 
-        String filename = "test";
+        String filename = "test"+String.valueOf(code);
 
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         // path to /data/data/yourapp/app_data/imageDir
@@ -180,11 +226,19 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         {
 
         }
-
-        this.uploadFile(file, "filepath", ft.toString(), getPeopleInRoomText(cb_people_in_room.isChecked()));
+        return file;
+    }
+    /**
+     * Function used to upload the given matrix to google drive
+     * @param matrix
+     * @param codee
+     */
+    public void uploadMatrix(File file, int code){
+        Date date = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat("yyyy/mm/dd:hh:ss");
+        this.uploadFile(file, "filepath", ft.format(date)+String.valueOf(code)+"1234", getPeopleInRoomText(cb_people_in_room.isChecked()));
 
     }
-
     /**
      * Method used to return a string given the given input
      * @param people_in_room, boolean value
@@ -233,14 +287,18 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         current_frame = inputFrame.rgba();
+
+        // Apply blurring
+        if (kernel_size > 0)
+            Imgproc.GaussianBlur(current_frame, current_frame, new Size(kernel_size + 1, kernel_size + 1), 0);
+
         if(output_frame!=null)
             output_frame.release();
 
         output_frame = current_frame.clone();
-        Imgproc.cvtColor(current_frame, output_frame, Imgproc.COLOR_BGR2GRAY);
 
-        if (kernel_size > 0)
-            Imgproc.GaussianBlur(output_frame, output_frame, new Size(kernel_size + 1, kernel_size + 1), 0);
+        // Turn output frame matrix gray
+        Imgproc.cvtColor(output_frame, output_frame, Imgproc.COLOR_BGR2GRAY);
 
         switch (state) {
 
@@ -276,7 +334,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
                 Imgproc.Canny(output_frame, output_frame, lowerThreshold, (int) lowerThreshold * (ratio));
                 break;
         }
-            return output_frame;
+        return output_frame;
 
     }
 
@@ -293,11 +351,13 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         this.fg = new Mat();
         this.older_frame = new Mat();
         this.old_frame = new Mat();
+        this.buffert = new Mat[BUFFERT_SIZE];
     }
 
     public void onCameraViewStopped()
     {
     }
+
     @Override
     protected void onResume()
     {
@@ -394,5 +454,21 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         });
     }
 
+
+    /**
+     * Adds the given matrix to the buffert and release the last matrix in buffert
+     * @param matrix
+     */
+    public void addBuffert(Mat matrix){
+
+        if(buffert[BUFFERT_SIZE-1]!=null)
+            buffert[BUFFERT_SIZE-1].release();
+
+        for(int i = BUFFERT_SIZE-2;i>-1;i--){
+            buffert[i+1] = buffert[i];
+        }
+
+        buffert[0] = matrix;
+    }
 
 }
