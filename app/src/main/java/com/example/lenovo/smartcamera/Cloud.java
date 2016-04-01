@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -27,7 +28,7 @@ import java.io.OutputStream;
  *
  * Created by Linus on 2016-03-11.
  */
-public class Cloud extends Activity implements GoogleApiClient.ConnectionCallbacks,
+public class Cloud extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener{
 
     GoogleApiClient mGoogleApiClient;
@@ -62,7 +63,7 @@ GoogleApiClient.OnConnectionFailedListener{
                     .addOnConnectionFailedListener(this)
                     .build();
         }
-        mGoogleApiClient.connect();
+        //mGoogleApiClient.connect();
     }
     /**
      * Handles resolution callbacks.

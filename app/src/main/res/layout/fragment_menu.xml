@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+
+    android:fitsSystemWindows="true"
+    tools:context=".Options">
+    <!-- tools:context="com.example.andreas.fragments.MainActivity" -->
+
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:background="#ffffff">
+
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/imageView"
+            android:soundEffectsEnabled="false"
+            android:src="@drawable/sony_logo"
+            android:layout_weight="6"
+            android:background="#ffffff" />
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+            android:weightSum="1">
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:ems="10"
+                    android:id="@+id/interval_text"
+                    android:hint="Time Intervall" />
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <EditText
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/start_text"
+                        android:layout_weight="1"
+                        android:hint="From time 00:00" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="-"
+                        android:id="@+id/textView"
+                        android:layout_weight="1"
+                        android:gravity="center" />
+
+                    <EditText
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/end_text"
+                        android:layout_weight="1"
+                        android:hint="End Time 00:00"
+                        android:hapticFeedbackEnabled="true" />
+                </LinearLayout>
+
+            <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HumanTag"
+                        android:textSize="20dp"
+                        android:id="@+id/textView2"
+                        android:layout_weight="1" />
+
+                    <Switch
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Off/On"
+                        android:textSize="20dp"
+                        android:id="@+id/switch2"
+                        android:layout_weight="0.1"
+                        android:checked="false" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HumanTag"
+                        android:textSize="20dp"
+                        android:id="@+id/human_text"
+                        android:layout_weight="1" />
+
+                    <Switch
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Off/On"
+                        android:textSize="20dp"
+                        android:id="@+id/switch1"
+                        android:layout_weight="0.1"
+                        android:checked="false" />
+
+                </LinearLayout>
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Confirm"
+                android:id="@+id/button"
+                android:background="#040404"
+                android:textColor="#f9f6f6"
+
+                android:onClick="confirm"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

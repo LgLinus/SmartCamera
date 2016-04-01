@@ -27,11 +27,15 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+//import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+
 /**
  * MainActivity
  */
 public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCameraViewListener2 {
 
+    private Toolbar toolbar;
     /* Camera variables */
     // Used to display footage
     CameraBridgeViewBase camera_view;
@@ -55,11 +59,15 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+       toolbar = (Toolbar) findViewById(R.id.toolbar);
+       setSupportActionBar(toolbar);
 
         initiateComponents();
         initiateListeners();
 
     }
+
+
 
     private void initiateListeners(){
         btnCapture.setOnClickListener(new View.OnClickListener() {
@@ -135,7 +143,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
         btnCapture = (Button)findViewById(R.id.btnCapture);
         btn_edge_detection = (Button)findViewById(R.id.btnEdges);
-        btn_plus_gauss = (Button)findViewById(R.id.btnPlusgauss);
+        btn_plus_gauss = (Button)findViewById(R.id.btnPlusGauss);
         btn_neg_gauss = (Button)findViewById(R.id.btnNegGauss);
 
         camera_view = (CameraBridgeViewBase)findViewById(R.id.camera_view);
