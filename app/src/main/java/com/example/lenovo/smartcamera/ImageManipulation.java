@@ -39,11 +39,21 @@ public class ImageManipulation {
     }
 
     public static void useAbsDiff(Mat source, Mat source2, Mat dst){
-        Log.d("IMAGEMANIPULAION","Source width: " + source.width() + "\tHeight: " +
-                source.height()+"\nSource2 width: " + source2.width() + "\tHeight: " + source2.height()+
-                "\ndst width: " + dst.width() + "\tHeight: " + dst.height());
-        Core.absdiff(source, source2, dst);
-        Imgproc.threshold(dst, dst, 45, 255, Imgproc.THRESH_BINARY);
+
+        for(int i = 0; i < source.width();i++){
+            for(int j = 0; j < source.height();j++){
+                int diff = 0;
+                double[] first = source.get(j,i);
+                double[] second = source2.get(j,i);
+                int sum = Math.abs((int)(first[0]-second[0]));
+                dst.put(j,i,sum);
+
+            }
+        }
+
+        Imgproc.threshold(dst, dst, 40, 255, Imgproc.THRESH_BINARY);
+
+       // Imgproc.threshold(dst, dst, 0, 255, Imgproc.THRESH_BINARY);
 
         // Imgproc.threshold(output_frame, output_frame, 100, 255, Imgproc.THRESH_BINARY);
     }
@@ -55,7 +65,7 @@ public class ImageManipulation {
      * @return median valued image
      */
     public static Mat acquireMedian(Mat[] buffert){
-
+        Log.d("IMAGEMANIPULATION","length of buffert: " + buffert.length);
 
         Mat mat = new Mat(buffert[0].height(),buffert[0].width(), CvType.CV_8U);
 
@@ -111,5 +121,19 @@ public class ImageManipulation {
             mats[i] = resizeImage(factorWidth,factorHeight,matrixes[i]);
         }
         return mats;
+    }
+
+    /**
+     * Function used to return the ratio of white pixels in the image
+     * @param mat
+     * @return ratio
+     */
+    public static double whiteBlackRatio(Mat mat){
+        Mat m = new Mat();
+        Core.extractChannel(mat,m,0);
+        int ctr = Core.countNonZero(m);
+        m.release();
+        return (double)ctr/(mat.width()*mat.height());
+
     }
 }

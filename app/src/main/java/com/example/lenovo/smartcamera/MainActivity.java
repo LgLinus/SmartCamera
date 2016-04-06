@@ -49,6 +49,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     // Used to display footage
     CameraBridgeViewBase camera_view;
     int counter=-1;
+    int ratioCounter = 1;
     // Current image
     int kernel_size = 4;
     int state = 0;
@@ -61,7 +62,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     Mat old_frame,older_frame;
     Mat output_frame;
     Mat fg,bg;
-    private final int BUFFERT_SIZE = 3;
+    private final int BUFFERT_SIZE = 2;
     Mat[] buffert;
     /* GUI elements */
     Button btn_edge_detection, btn_plus_gauss, btn_neg_gauss;
@@ -73,6 +74,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     final int ORIGINAL = 0;
     final int ABSDIFF = 1;
     public static final int BUFFERUPDATESECONDS = 5;
+    public static int timer_seconds=10;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -103,7 +105,8 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
                 EditText etTimer = (EditText) alertDialog.findViewById(R.id.etTimer);
 
                 try {
-                    setTimer(Integer.parseInt(etTimer.getText().toString()));
+                    timer_seconds = Integer.parseInt(etTimer.getText().toString());
+                    setTimer();
                     setTimerMedianfilter();
                     dialog.dismiss();
                 } catch (NumberFormatException e) {
@@ -127,12 +130,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
     /**
      * Used to set the timer for the photos to be taken
-     * @param seconds, intervall between photos
      */
-    private void setTimer(int seconds){
+    private void setTimer(){
 
-        if(seconds<10)
-            seconds = 10;
+        if(timer_seconds<10)
+            timer_seconds = 10;
 
         TimerTask task = new TimerTask(){
             @Override
@@ -147,7 +149,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
             }
         };
 
-        new Timer().scheduleAtFixedRate(task, seconds * 1000, seconds * 1000);
+        new Timer().scheduleAtFixedRate(task, timer_seconds * 1000, timer_seconds * 1000);
     }
 
     private void setTimerMedianfilter(){
@@ -158,40 +160,77 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Mat temp = current_frame.clone();
-                        addBuffert(temp);
+                        addBuffert(current_frame);
                         Log.d("MAINACTIVITY", "added image to buffer");
                     }
                 });
             }
         };
 
-        new Timer().scheduleAtFixedRate(task, 1000, 1000); /// 4
+        new Timer().scheduleAtFixedRate(task, (timer_seconds / (BUFFERT_SIZE + 2)) * 1000, (timer_seconds / (BUFFERT_SIZE + 2)) * 1000); /// 4
     }
 
     /**
      * Save the image currently being displayed
      */
     public void saveImage(){
+/*
+        Mat matrix,current_low_res_frame;
+
+        // Acquire medaian image
+        matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2, buffert));
+        Mat cfclone = ImageManipulation.resizeImage(2,2,current_frame);
+        Imgproc.cvtColor(cfclone,cfclone,Imgproc.COLOR_BGR2GRAY);
+        // Resize current image
+       // current_low_res_frame = ImageManipulation.resizeImage(4, 4, current_frame);
+
+      //  Mat current_low_res_frame_gray = current_low_res_frame.clone();
+        //Imgproc.cvtColor(current_low_res_frame, current_low_res_frame_gray, Imgproc.COLOR_BGR2GRAY);
+        Mat output = new Mat(matrix.width(),matrix.height(),CvType.CV_8UC1);
+
+        // Apply absdiff on new img + median image
+        ImageManipulation.useAbsDiff(matrix, cfclone, output);
+        double ratio;
+        if((ratio=ImageManipulation.whiteBlackRatio(output))>0.008){
+            Toast.makeText(getApplicationContext(),"Detected movement",Toast.LENGTH_SHORT).show();
+        }
+        Log.d("MAINACTIVITY","id: " + ratioCounter + "\tratio of pixels: " + ratio);
+        ratioCounter++;
+       // uploadMatrix(saveMatrix(output, 1), 1);
+        //uploadMatrix(saveMatrix(current_frame,0),0);
+        saveMatrix(output,1);
+        saveMatrix(matrix,2);
+        saveMatrix(cfclone,0);
+
+
+        // Create bitmap from image
+       matrix.release();
+        output.release();
+       // current_low_res_frame.clone();*/
 
         Mat matrix,current_low_res_frame;
 
         // Acquire medaian image
-        matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(4,4,buffert));
-
+        matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2,buffert));
+       // matrix = ImageManipulation.acquireMedian(buffert);
         // Resize current image
-        current_low_res_frame = ImageManipulation.resizeImage(4, 4, current_frame);
+        current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
         Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
 
-        Mat output = new Mat(matrix.width(),matrix.height(),CvType.CV_8UC1);
+        Mat output = new Mat(matrix.height(),matrix.width(),CvType.CV_8UC1);
+
+
+
         // Apply absdiff on new img + median image
         ImageManipulation.useAbsDiff(matrix, current_low_res_frame, output);
 
-        uploadMatrix(saveMatrix(output,1),1);
-        uploadMatrix(saveMatrix(current_low_res_frame,0),0);
+        //uploadMatrix(saveMatrix(output,1),1);
+        //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
+        saveMatrix(output,1);
+        saveMatrix(current_low_res_frame,0);
         saveMatrix(matrix,2);
         // Create bitmap from image
-       matrix.release();
+        matrix.release();
         output.release();
     }
 
@@ -467,8 +506,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         for(int i = BUFFERT_SIZE-2;i>-1;i--){
             buffert[i+1] = buffert[i];
         }
+        Mat toAdd = matrix.clone();
+        Imgproc.cvtColor(toAdd,toAdd,Imgproc.COLOR_BGR2GRAY);
 
-        buffert[0] = matrix;
+
+        buffert[0] = toAdd;
     }
 
 }
