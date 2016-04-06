@@ -174,66 +174,39 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
      * Save the image currently being displayed
      */
     public void saveImage(){
-/*
-        Mat matrix,current_low_res_frame;
+        Mat median_matrix,current_low_res_frame;
 
         // Acquire medaian image
-        matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2, buffert));
-        Mat cfclone = ImageManipulation.resizeImage(2,2,current_frame);
-        Imgproc.cvtColor(cfclone,cfclone,Imgproc.COLOR_BGR2GRAY);
-        // Resize current image
-       // current_low_res_frame = ImageManipulation.resizeImage(4, 4, current_frame);
-
-      //  Mat current_low_res_frame_gray = current_low_res_frame.clone();
-        //Imgproc.cvtColor(current_low_res_frame, current_low_res_frame_gray, Imgproc.COLOR_BGR2GRAY);
-        Mat output = new Mat(matrix.width(),matrix.height(),CvType.CV_8UC1);
-
-        // Apply absdiff on new img + median image
-        ImageManipulation.useAbsDiff(matrix, cfclone, output);
-        double ratio;
-        if((ratio=ImageManipulation.whiteBlackRatio(output))>0.008){
-            Toast.makeText(getApplicationContext(),"Detected movement",Toast.LENGTH_SHORT).show();
-        }
-        Log.d("MAINACTIVITY","id: " + ratioCounter + "\tratio of pixels: " + ratio);
-        ratioCounter++;
-       // uploadMatrix(saveMatrix(output, 1), 1);
-        //uploadMatrix(saveMatrix(current_frame,0),0);
-        saveMatrix(output,1);
-        saveMatrix(matrix,2);
-        saveMatrix(cfclone,0);
-
-
-        // Create bitmap from image
-       matrix.release();
-        output.release();
-       // current_low_res_frame.clone();*/
-
-        Mat matrix,current_low_res_frame;
-
-        // Acquire medaian image
-        matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2,buffert));
+        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2,buffert));
        // matrix = ImageManipulation.acquireMedian(buffert);
         // Resize current image
         current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
         Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
 
-        Mat output = new Mat(matrix.height(),matrix.width(),CvType.CV_8UC1);
-
-
+        Mat absdiff_output = new Mat(median_matrix.height(),median_matrix.width(),CvType.CV_8UC1);
 
         // Apply absdiff on new img + median image
-        ImageManipulation.useAbsDiff(matrix, current_low_res_frame, output);
+        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output);
 
         //uploadMatrix(saveMatrix(output,1),1);
         //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
-        saveMatrix(output,1);
+
+        /* Save the relevant matrixes */
+        saveMatrix(absdiff_output,1);
         saveMatrix(current_low_res_frame,0);
-        saveMatrix(matrix,2);
-        // Create bitmap from image
-        matrix.release();
-        output.release();
+        saveMatrix(median_matrix,2);
+
+        // Release the created matrix to avoid memory leaks
+        median_matrix.release();
+        absdiff_output.release();
     }
 
+    /**
+     * Function saving the matrix to the local storage on the device as a .png file
+     * @param matrix to save
+     * @param code ending of file
+     * @return
+     */
     public File saveMatrix(Mat matrix, int code){
         Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(matrix, resultBitmap);
@@ -269,8 +242,8 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     }
     /**
      * Function used to upload the given matrix to google drive
-     * @param matrix
-     * @param codee
+     * @param matrix to upload
+     * @param code to add to file ending
      */
     public void uploadMatrix(File file, int code){
         Date date = new Date();
