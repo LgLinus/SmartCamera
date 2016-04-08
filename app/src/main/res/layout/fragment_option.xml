@@ -6,7 +6,7 @@
     android:layout_height="fill_parent"
 
     android:fitsSystemWindows="true"
-    tools:context=".Options">
+    tools:context=".OptionsFragment">
     <!-- tools:context="com.example.andreas.fragments.MainActivity" -->
 
 
@@ -17,6 +17,33 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:background="#ffffff">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="48dp"
+            android:weightSum="1"
+            android:background="#000000">
+
+            <ImageButton
+                android:layout_width="80dp"
+                android:layout_height="match_parent"
+                android:id="@+id/btn_Back"
+                android:src="@drawable/icon_back"
+                android:scaleType="fitCenter"
+                android:background="#010101"
+                />
+
+            <TextView
+                android:layout_width="110dp"
+                android:layout_height="match_parent"
+                android:text="Main"
+                android:textSize="20dp"
+                android:id="@+id/options_text"
+                android:gravity="center"
+                android:textColor="#ffffff" />
+
+        </LinearLayout>
+
 
         <ImageView
             android:layout_width="fill_parent"
@@ -125,7 +152,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Confirm"
-                android:id="@+id/button"
+                android:id="@+id/btn_Confirm"
                 android:background="#040404"
                 android:textColor="#f9f6f6"
 

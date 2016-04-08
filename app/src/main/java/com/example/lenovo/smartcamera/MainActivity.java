@@ -1,6 +1,8 @@
 package com.example.lenovo.smartcamera;
 
-import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Bitmap;
@@ -11,13 +13,13 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.widget.Button;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -25,21 +27,19 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 //import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
 
 /**
  * MainActivity
  */
 public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCameraViewListener2 {
-
-    private Toolbar toolbar;
-    /* Camera variables */
+    //    ---.---  Camera variables ---.--- //
     // Used to display footage
     CameraBridgeViewBase camera_view;
-
     // Current image
     Mat current_frame = null;
     Mat old_frame = null;
@@ -48,58 +48,75 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     int current=0;
     boolean edgeDetection = false;
     int kernel_size = 4;
-    /* End of camera variables */
+    //    ---.---  Fragment ---.--- //
 
-    Button btn_edge_detection, btn_plus_gauss, btn_neg_gauss;
-    Button btnCapture;
+    private Fragment fragment;
+    private FragmentManager fragment_Manager;
+    private FragmentTransaction fragment_Transaction;
+
+    private OptionsFragment option_Fragment;
+    private MainFragment main_Fragment;
+
+    // ---.--- Triggers ---.---
+    //Timer interval
+    private int second = 1000;
+    private int start_time;
+    private int interval;
+    private Thread timer_thread;
+
+    //On/Off
+    private boolean on = false;
+
+    //Clock time
+    private boolean itIsTime = false;
+    private Calendar cal;
+    private int hour_start, hour_end, minute_start, minute_end;
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       toolbar = (Toolbar) findViewById(R.id.toolbar);
-       setSupportActionBar(toolbar);
 
-        initiateComponents();
-        initiateListeners();
+        //Create the fragments
+        option_Fragment = new OptionsFragment();
+        main_Fragment = new MainFragment();
+        fragment_Manager = getFragmentManager();
+        fragment_Transaction = fragment_Manager.beginTransaction();
+        //Load the menufragment to the display
+        fragment_Transaction.replace(R.id.fragment_container, main_Fragment);
+        fragment_Transaction.commit();
 
     }
 
-
-
-    private void initiateListeners(){
-        btnCapture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                saveImage();
-            }
-        });
-        btn_edge_detection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                edgeDetection = !edgeDetection;
-            }
-        });
-        btn_plus_gauss.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                kernel_size*=2;
-            }
-        });
-
-        btn_neg_gauss.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                kernel_size/=2;
-            }
-        });
-    }
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Fragment xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
     /**
-     * Save the image currently being displayed
+     * This method changes between the fragments menu
+     * @param id = the name of the fragment that will be displayed
      */
+    public void changeFragment(String id)
+    {
+        if(id.equals("option"))
+        {
+            fragment_Manager = getFragmentManager();
+            fragment_Transaction = fragment_Manager.beginTransaction();
+            fragment_Transaction.replace(R.id.fragment_container, option_Fragment);
+            fragment_Transaction.commit();
+        }
+        else if(id.equals("main"))
+        {
+            fragment_Manager = getFragmentManager();
+            fragment_Transaction = fragment_Manager.beginTransaction();
+            fragment_Transaction.replace(R.id.fragment_container, main_Fragment);
+            fragment_Transaction.commit();
+        }
+
+    }
+
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Image Handling xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     public void saveImage(){
 
         Mat matrix = current_frame;
@@ -109,8 +126,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
         Date date = new Date();
 
-        SimpleDateFormat ft =
-                new SimpleDateFormat ("yyyy/mm/dd_hh/mm/ss");
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyy/mm/dd_hh/mm/ss");
 
         String filename = "test";
 
@@ -138,31 +154,6 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         this.uploadFile(file, "filepath", "testing", "blabla");
 
     }
-
-    private void initiateComponents(){
-
-        btnCapture = (Button)findViewById(R.id.btnCapture);
-        btn_edge_detection = (Button)findViewById(R.id.btnEdges);
-        btn_plus_gauss = (Button)findViewById(R.id.btnPlusGauss);
-        btn_neg_gauss = (Button)findViewById(R.id.btnNegGauss);
-
-        camera_view = (CameraBridgeViewBase)findViewById(R.id.camera_view);
-
-        // Make the cameraview visible
-        camera_view.setVisibility(SurfaceView.VISIBLE);
-
-        camera_view.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
-        // Set the listener to the implemented CvCameraViewListener
-        camera_view.setCvCameraViewListener(this);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
     /**
      * Called when the frame for the camera changes, here appropiate transformations should occur
      * @param inputFrame
@@ -249,10 +240,79 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
                 {
                     Log.d("init", "OpenCV loaded successfully");
                     // Load native libs after OpenCV initialization
-                    camera_view.enableView();
+                    //camera_view.enableView();
                 }
             }
         }
     };
+
+//-----------------------------  Triggers ---------------------------
+    public void clockTime(int h_start,int h_end,int m_start,int m_end)
+    {
+
+    }
+    /**
+     * This method is like an on/off switch, which changes the variable "on" to false/true
+     */
+    public void onOff()
+    {
+        if(on)
+            on = false;
+        else
+        on = true;
+    }
+    public void setTime(int time)
+    {
+        start_time = time;
+        interval = time;
+
+        //If the thread is running, stop it so the new timer can be applied
+        if(!timer_thread.isInterrupted())
+            timer_thread.interrupt();
+
+        timer_thread = new Thread()
+        {
+            public void run()
+            {
+                while(!Thread.interrupted())
+                {
+                    //Sleep until the interval time has passed
+                    while (interval > 0)
+                    {
+                        //Decreases the interval time by one second
+                        try
+                        {
+                            Thread.sleep(second);
+                            interval -= 1;
+                        } catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                    //Reset the interval timer
+                    interval = start_time;
+                    runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
+                            saveImage();
+                        }
+                    });
+                }
+            }
+        };
+        timer_thread.start();
+    }
+//  GAAUUSS AND SHIIIEEET
+    public void setEdgeDetection()
+    {
+        edgeDetection = !edgeDetection;
+    }
+    public void setKernel_size(int size)
+    {
+        kernel_size*= size;
+    }
 
 }
