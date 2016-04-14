@@ -1,14 +1,19 @@
 package com.example.lenovo.smartcamera;
 
 import android.app.Fragment;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Created by Andreas on 2016-03-30.
@@ -20,8 +25,13 @@ public class OptionsFragment extends Fragment
     private boolean on = false;
     private boolean human;
 
+    private String hour_start, hour_end, minute_start, minute_end;
+
     private ImageButton btn_Back;
     private Button btn_Confirm;
+
+    private Switch btn_Switch;
+    private TextView text_view;
 
     private View view;
     @Override
@@ -31,18 +41,17 @@ public class OptionsFragment extends Fragment
         initiateListeners(view);
         return view;
     }
-   /* public void onCreate(Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-    }*/
     public void mainMenu(View view)
     {
         ((MainActivity)getActivity()).changeFragment("main");
     }
-    private void initiateListeners(View rootView)
+    private void initiateListeners(final View rootView)
     {
         btn_Back = (ImageButton) rootView.findViewById(R.id.btn_Back);
         btn_Confirm = (Button) rootView.findViewById(R.id.btn_Confirm);
+
+        btn_Switch = (Switch) rootView.findViewById(R.id.btn_status);
+        text_view = (TextView)rootView.findViewById(R.id.text_status);
 
         btn_Back.setOnClickListener(new View.OnClickListener()
         {
@@ -55,31 +64,54 @@ public class OptionsFragment extends Fragment
         btn_Confirm.setOnClickListener(new View.OnClickListener()
         {
             @Override
-            public void onClick(View v)
-            {
-                ((MainActivity) getActivity()).changeFragment("option");
+            public void onClick(View v) {
+                try {
+                    confirm();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
     }
-    // Use in order to get view by id
-    // Note: you can get the fragment view anywhere in the class by using getView()
-    // once onCreateView() has been executed successfully. i.e.
-   /* @Override
-    public void onViewCreated(View view, Bundle savedInstanceState)
+    public void confirm() throws InterruptedException
     {
-        super.onViewCreated(view, savedInstanceState);
-        view.findViewById(R.id.interval_text).setOnClickListener((View.OnClickListener) this);
-        view.findViewById(R.id.interval_text).setOnClickListener((View.OnClickListener) this);
+        try
+        {
+            EditText et_i = (EditText) getView().findViewById(R.id.interval_text);
 
-    }*/
-    public void confirm(View v)
-    {
-        EditText et = (EditText) getView().findViewById(R.id.interval_text);
-        interval = Integer.parseInt(et.getText().toString());
-    }
-    public void setInterval(int time)
-    {
+            if(!isEmpty(et_i))
+            {
+                interval = Integer.parseInt(et_i.getText().toString());
+                ((MainActivity) getActivity()).setTime(interval);
+            }
+
+            EditText et_s = (EditText) getView().findViewById(R.id.start_text);
+            EditText et_e = (EditText) getView().findViewById(R.id.end_text);
+            if(!isEmpty(et_s))
+            {
+                ((MainActivity) getActivity()).setClockTime(et_s.getText().toString(), et_e.getText().toString());
+            }
+
+            Toast.makeText(((MainActivity) getActivity()), "Confirmed", Toast.LENGTH_SHORT).show();
+
+            if(btn_Switch.isChecked())
+                ((MainActivity) getActivity()).onOff(true);
+
+            else
+                ((MainActivity) getActivity()).onOff(false);
+
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            Toast.makeText(((MainActivity) getActivity()), "Fill in all", Toast.LENGTH_SHORT).show();
+        }
 
     }
+    private boolean isEmpty(EditText etText)
+    {
+        return etText.getText().toString().trim().length() == 0;
+    }
+
 }

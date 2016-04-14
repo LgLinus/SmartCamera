@@ -9,10 +9,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.SurfaceView;
-import android.view.View;
-import android.view.Menu;
-import android.widget.Button;
+
 import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -26,20 +23,21 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileOutputStream;
+
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-//import android.support.v7.app.AppCompatActivity;
 
 
 /**
  * MainActivity
  */
-public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class MainActivity extends Cloud {
     //    ---.---  Camera variables ---.--- //
     // Used to display footage
-    CameraBridgeViewBase camera_view;
+    //CameraBridgeViewBase camera_view;
     // Current image
     Mat current_frame = null;
     Mat old_frame = null;
@@ -62,15 +60,15 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     private int second = 1000;
     private int start_time;
     private int interval;
-    private Thread timer_thread;
+    private boolean run = false;
+    private Thread timer_thread = null;
 
     //On/Off
     private boolean on = false;
 
     //Clock time
     private boolean itIsTime = false;
-    private Calendar cal;
-    private int hour_start, hour_end, minute_start, minute_end;
+    private String start_clock, end_clock;
 
 
     @Override
@@ -90,7 +88,6 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         fragment_Transaction.commit();
 
     }
-
 // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Fragment xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
     /**
@@ -115,175 +112,92 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         }
 
     }
-
-// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Image Handling xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    public void saveImage(){
-
-        Mat matrix = current_frame;
-        // Create bitmap from image
-        Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(matrix, resultBitmap);
-
-        Date date = new Date();
-
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyy/mm/dd_hh/mm/ss");
-
-        String filename = "test";
-
-        ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        // path to /data/data/yourapp/app_data/imageDir
-        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        // Create imageDir
-        File file=new File(directory,filename+".png");
-        FileOutputStream fos = null;
-        try
-        {
-            fos = new FileOutputStream(file);
-            // Use the compress method on the BitMap object to write image to the OutputStream
-            resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-            fos.close();
-            MediaStore.Images.Media.insertImage(getContentResolver(), resultBitmap, filename+".png", "xaxa");
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        } finally
-        {
-
-        }
-
-        this.uploadFile(file, "filepath", "testing", "blabla");
-
-    }
-    /**
-     * Called when the frame for the camera changes, here appropiate transformations should occur
-     * @param inputFrame
-     * @return
-     */
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
-    {
-        if(first){
-            first = false;
-            old_frame = inputFrame.rgba();
-            test = old_frame;
-        }
-        else
-            current_frame = inputFrame.rgba();
-        if(old_frame!=null && current_frame!=null)
-        {
-            Log.d("crash", "pre crash 2");
-            Mat bg = new Mat();
-            Mat cg= new Mat();
-            test = new Mat();
-
-            // cvT Color works
-            Imgproc.cvtColor(old_frame, bg, Imgproc.COLOR_BGR2GRAY);
-            Imgproc.cvtColor(current_frame, cg, Imgproc.COLOR_BGR2GRAY);
-            Imgproc.cvtColor(current_frame, test, Imgproc.COLOR_BGR2GRAY);
-
-            Log.d("crash", "pre crash 3");
-            // TODO
-            Mat test2 = new Mat();
-
-            Imgproc.GaussianBlur(current_frame,test,new Size(kernel_size+1,kernel_size+1),0);
-            int lowerThreshold = 55 ; //155
-            double ratio = 1.10; // 1.25
-            if(edgeDetection)
-                Imgproc.Canny(test, test, lowerThreshold, (int)lowerThreshold*(ratio));
-            // Core.absdiff(bg,cg, test);
-
-            Log.d("crash", "pre crash 3");
-
-           // Imgproc.cvtColor(test2, test, Imgproc.COLOR_BGR2GRAY);
-            // Convert to BW
-          //  Imgproc.threshold(test, test, 35, 255, Imgproc.THRESH_BINARY_INV);
-
-            Log.d("crash", "pre crash 41213");
-            // TODO size needs to be odd positive number
-            }
-
-        Log.d("crash","pre crash 4");
-        Log.d("crash","pre crash 5");
-        return test;
-    }
-
-
-    public void onCameraViewStarted(int width, int height)
-    {
-    }
-
-    public void onCameraViewStopped()
-    {
-    }
-    @Override
-    protected void onResume()
-    {
-        super.onResume();
-        initOpenCV();
-    }
-
-    /**
-     * Init functions below
-     */
-    private void initOpenCV()
-    {
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
-    }
-
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this)
-    {
-        @Override
-        public void onManagerConnected(int status)
-        {
-            switch(status)
-            {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.d("init", "OpenCV loaded successfully");
-                    // Load native libs after OpenCV initialization
-                    //camera_view.enableView();
-                }
-            }
-        }
-    };
-
 //-----------------------------  Triggers ---------------------------
-    public void clockTime(int h_start,int h_end,int m_start,int m_end)
-    {
 
+    /**
+     * This method return if the value of the onOff switch
+     * @return: True if on and false if off
+     */
+    public boolean getStatus()
+    {
+        return on;
     }
     /**
      * This method is like an on/off switch, which changes the variable "on" to false/true
      */
-    public void onOff()
+    public void onOff(boolean b)
     {
-        if(on)
-            on = false;
-        else
-        on = true;
+        on = b;
     }
-    public void setTime(int time)
+    /**
+     * This method check if the current time is in between the setClocktime period
+     * @return: True if it's time to take pictures, false if the picture time have passed.
+     */
+    public boolean isItTime()
     {
+        //No time have been set
+        if(start_clock.equals(null) && end_clock.equals(null) )
+            return true;
+        else
+        {
+            Calendar cal = Calendar.getInstance();
+            SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
+            String current_time = sdf.format(cal.getTime());
+
+            //If current_time is higher then the start time and lower then the end time, then taking photo is ok.
+            if(current_time.compareTo(start_clock) == 1 && current_time.compareTo(end_clock) == -1)
+                return true;
+
+            return false;
+        }
+
+    }
+    /**
+     * This method sets the time when the camera should take pictures
+     * @param start: The start time picture will start be taken
+     * @param end: The end time picture will no longer be taken ones passed end time
+     * @throws ParseException
+     */
+    public void setClockTime(String start, String end) throws ParseException
+    {
+        SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
+        start_clock = sdf.format(sdf.parse(start));
+        end_clock = sdf.format(sdf.parse(end));
+    }
+
+    /**
+     * This method sets the time how often the camera shall save pictures
+     * @param time: The intervall time
+     * @throws InterruptedException
+     */
+    public void setTime(int time) throws InterruptedException
+    {
+        //If the thread is running, stop it so the new timer can be applied
+        if(run)
+        {
+            run = false;
+            //Wait for the current thread to end
+            timer_thread.join();
+        }
+        run = true;
         start_time = time;
         interval = time;
-
-        //If the thread is running, stop it so the new timer can be applied
-        if(!timer_thread.isInterrupted())
-            timer_thread.interrupt();
 
         timer_thread = new Thread()
         {
             public void run()
             {
-                while(!Thread.interrupted())
+                while(run)
                 {
                     //Sleep until the interval time has passed
-                    while (interval > 0)
+                    while (interval > 0 && run)
                     {
                         //Decreases the interval time by one second
                         try
                         {
                             Thread.sleep(second);
                             interval -= 1;
+                            Log.d("init", "Count: " + interval);
                         } catch (InterruptedException e)
                         {
                             e.printStackTrace();
@@ -291,15 +205,18 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
                     }
                     //Reset the interval timer
                     interval = start_time;
-                    runOnUiThread(new Runnable()
+                    if(run)
                     {
-                        @Override
-                        public void run()
+                        runOnUiThread(new Runnable()
                         {
-                            Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
-                            saveImage();
-                        }
-                    });
+                            @Override
+                            public void run()
+                            {
+                                Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
+                                //saveImage();
+                            }
+                        });
+                    }
                 }
             }
         };
