@@ -56,6 +56,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     public static final int NEUTRAL = 0;
     public static final int EDGE_DETECTION = 1;
     public static final int MOTION_DETECTION = 2;
+    final double PEOPLE_LOW_THRESHOLD = 0.01;
     /* End of camera variables */
 
     Mat current_frame = null;
@@ -75,6 +76,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     final int ABSDIFF = 1;
     public static final int BUFFERUPDATESECONDS = 5;
     public static int timer_seconds=10;
+    private SendInfo send;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -85,7 +87,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         initiateComponents();
         initiateListeners();
 
-
+        send = new SendInfo();
     }
 
     /**
@@ -187,7 +189,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
 
         // Apply absdiff on new img + median image
         ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output);
+        double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
 
+
+        send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
+        ratioCounter++;
         //uploadMatrix(saveMatrix(output,1),1);
         //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
 
@@ -195,6 +201,11 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         saveMatrix(absdiff_output,1);
         saveMatrix(current_low_res_frame,0);
         saveMatrix(median_matrix,2);
+
+        if(ratio>=PEOPLE_LOW_THRESHOLD)
+            uploadMatrix(saveMatrix(current_frame,0),"people in room");
+        else
+            uploadMatrix(saveMatrix(current_frame,1),"empty room");
 
         // Release the created matrix to avoid memory leaks
         median_matrix.release();
@@ -212,7 +223,7 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
         Utils.matToBitmap(matrix, resultBitmap);
 
         Date date = new Date();
-        Log.d("MAINACTIVITY","code: " + code);
+        Log.d("MAINACTIVITY", "code: " + code);
         SimpleDateFormat ft =
                 new SimpleDateFormat ("yyyy/mm/dd_hh:mm:ss");
 
@@ -245,10 +256,10 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
      * @param matrix to upload
      * @param code to add to file ending
      */
-    public void uploadMatrix(File file, int code){
+    public void uploadMatrix(File file, String tag){
         Date date = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("yyyy/mm/dd:hh:ss");
-        this.uploadFile(file, "filepath", ft.format(date)+String.valueOf(code)+"1234", getPeopleInRoomText(cb_people_in_room.isChecked()));
+        this.uploadFile(file, "filepath", ft.format(date)+"1234", tag);
 
     }
     /**

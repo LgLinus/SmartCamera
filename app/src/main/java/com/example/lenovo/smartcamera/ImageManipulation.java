@@ -38,20 +38,17 @@ public class ImageManipulation {
 
     }
 
-    public static void useAbsDiff(Mat source, Mat source2, Mat dst){
-
-        for(int i = 0; i < source.width();i++){
-            for(int j = 0; j < source.height();j++){
-                int diff = 0;
-                double[] first = source.get(j,i);
-                double[] second = source2.get(j,i);
-                int sum = Math.abs((int)(first[0]-second[0]));
-                dst.put(j,i,sum);
-
+    public static void useAbsDiff(Mat average_image, Mat current_image, Mat result_image) {
+        for (int i = 0; i < average_image.width(); i++) { // Go through each pixel in the image
+            for (int j = 0; j < average_image.height(); j++) {
+                double[] first = average_image.get(j, i); // Retrieve pixel values
+                double[] second = current_image.get(j, i);
+                int sum = Math.abs((int) (first[0] - second[0])); // Calculate absolute difference
+                result_image.put(j, i, sum); // Put difference value in the result image
             }
         }
 
-        Imgproc.threshold(dst, dst, 40, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(result_image, result_image, 40, 255, Imgproc.THRESH_BINARY);
 
        // Imgproc.threshold(dst, dst, 0, 255, Imgproc.THRESH_BINARY);
 
@@ -65,31 +62,20 @@ public class ImageManipulation {
      * @return median valued image
      */
     public static Mat acquireMedian(Mat[] buffert){
-        Log.d("IMAGEMANIPULATION","length of buffert: " + buffert.length);
-
-        Mat mat = new Mat(buffert[0].height(),buffert[0].width(), CvType.CV_8U);
-
+        Mat result_image = new Mat(buffert[0].height(),buffert[0].width(), CvType.CV_8U);
         int l = 0;
-        for(int i = 0; i < buffert[0].width();i++){
-
+        for(int i = 0; i < buffert[0].width();i++){// Go through each pixel
             for(int j = 0; j  < buffert[0].height();j++){
                 int sum = 0;
-
-                for(int k = 0; k < buffert.length;k++){
+                for(int k = 0; k < buffert.length;k++){ // Check each image in buffert
                     double[] value = buffert[k].get(j,i);
                     sum+=value[0];
                 }
-                //l++;
-                //l%=2;
-                 //double[] value = {l*255};
                  double[] value = {((sum)/(double)buffert.length)};
-                 mat.put(j,i,value);
+                 result_image.put(j, i, value); // Put the calculated average pixel value in result image
             }
-
         }
-        Log.d("Image size IMNIPULATION", "width: 2nd");
-
-        return mat;
+       return result_image;
     }
 
     /**
