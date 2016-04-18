@@ -29,7 +29,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -40,31 +41,8 @@ public class MainActivity extends Cloud {
     // Used to display footage
     //CameraBridgeViewBase camera_view;
 
-    final int ORIGINAL = 0;
-    final int ABSDIFF = 1;
-    public static final int BUFFERUPDATESECONDS = 5;
-    public static int timer_seconds=10;
-    private SendInfo send;
 
-    int counter=-1;
-    int ratioCounter = 1;
-
-    Mat current_frame = null;
-    Mat old_frame,older_frame;
-    Mat output_frame;
-    Mat fg,bg;
-    private final int BUFFERT_SIZE = 2;
-    Mat[] buffert;
-
-    public static final int NEUTRAL = 0;
-    public static final int EDGE_DETECTION = 1;
-    public static final int MOTION_DETECTION = 2;
-    final double PEOPLE_LOW_THRESHOLD = 0.01;
-
-    // Current image
-    boolean edgeDetection = false;
-    int kernel_size = 4;
-    //    ---.---  Fragment ---.--- //
+     //    ---.---  Fragment ---.--- //
 
     private Fragment fragment;
     private FragmentManager fragment_Manager;
@@ -165,7 +143,6 @@ public class MainActivity extends Cloud {
             //If current_time is higher then the start time and lower then the end time, then taking photo is ok.
             if(current_time.compareTo(start_clock) == 1 && current_time.compareTo(end_clock) == -1)
                 return true;
-
             return false;
         }
 
@@ -230,8 +207,9 @@ public class MainActivity extends Cloud {
                             @Override
                             public void run()
                             {
+
                                 Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
-                                saveImage();
+                                main_Fragment.saveImage();
                             }
                         });
                     }
@@ -239,106 +217,18 @@ public class MainActivity extends Cloud {
             }
         };
         timer_thread.start();
+       main_Fragment.setTimerMedianfilter(time);
     }
 //  GAAUUSS AND SHIIIEEET
-    public void setEdgeDetection()
+    /*public void setEdgeDetection()
     {
         edgeDetection = !edgeDetection;
     }
     public void setKernel_size(int size)
     {
         kernel_size*= size;
-    }
+    }*/
 
-// ------------------------------- Image Handling
-    /**
-     * Save the image currently being displayed
-     */
-    public void saveImage(){
-        Mat median_matrix,current_low_res_frame;
-
-        // Acquire medaian image
-        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2,buffert));
-        // matrix = ImageManipulation.acquireMedian(buffert);
-        // Resize current image
-        current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
-        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
-
-        Mat absdiff_output = new Mat(median_matrix.height(),median_matrix.width(), CvType.CV_8UC1);
-
-        // Apply absdiff on new img + median image
-        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output);
-        double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
-
-
-        send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
-        ratioCounter++;
-        //uploadMatrix(saveMatrix(output,1),1);
-        //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
-
-        /* Save the relevant matrixes */
-        saveMatrix(absdiff_output,1);
-        saveMatrix(current_low_res_frame,0);
-        saveMatrix(median_matrix,2);
-
-        if(ratio>=PEOPLE_LOW_THRESHOLD)
-            uploadMatrix(saveMatrix(current_frame,0),"people in room");
-        else
-            uploadMatrix(saveMatrix(current_frame,1),"empty room");
-
-        // Release the created matrix to avoid memory leaks
-        median_matrix.release();
-        absdiff_output.release();
-    }
-    /**
-     * Function saving the matrix to the local storage on the device as a .png file
-     * @param matrix to save
-     * @param code ending of file
-     * @return
-     */
-    public File saveMatrix(Mat matrix, int code){
-        Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(matrix, resultBitmap);
-
-        Date date = new Date();
-        Log.d("MAINACTIVITY", "code: " + code);
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyy/mm/dd_hh:mm:ss");
-
-        String filename = "test"+String.valueOf(code);
-
-        ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        // path to /data/data/yourapp/app_data/imageDir
-        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        // Create imageDir
-        File file=new File(directory,filename+".png");
-        FileOutputStream fos = null;
-        try
-        {
-            fos = new FileOutputStream(file);
-            // Use the compress method on the BitMap object to write image to the OutputStream
-            resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-            fos.close();
-            MediaStore.Images.Media.insertImage(getContentResolver(), resultBitmap, filename+".png", "xaxa");
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        } finally
-        {
-
-        }
-        return file;
-    }
-    /**
-     * Function used to upload the given matrix to google drive
-     * @param file to upload
-     * @param tag to add to file ending
-     */
-    public void uploadMatrix(File file, String tag){
-        Date date = new Date();
-        SimpleDateFormat ft = new SimpleDateFormat("yyyy/mm/dd:hh:ss");
-        this.uploadFile(file, "filepath", ft.format(date)+"1234", tag);
-
-    }
     /**
      * Method used to return a string given the given input
      * @param people_in_room, boolean value
@@ -351,39 +241,5 @@ public class MainActivity extends Cloud {
         else
             return "empty";
     }
-    /**
-     * Called when the cameraview is setup
-     * @param width -  the width of the frames that will be delivered
-     * @param height - the height of the frames that will be delivered
-     */
-    public void onCameraViewStarted(int width, int height)
-    {
-        Log.d("camerastart","camerastarted");
-        this.output_frame = new Mat(width,height, CvType.CV_8U);
-        this.bg = new Mat(width,height, CvType.CV_8U);
-        this.fg = new Mat();
-        this.older_frame = new Mat();
-        this.old_frame = new Mat();
-        this.buffert = new Mat[BUFFERT_SIZE];
-    }
-    /**
-     * Adds the given matrix to the buffert and release the last matrix in buffert
-     * @param matrix
-     */
-    public void addBuffert(Mat matrix){
-
-        if(buffert[BUFFERT_SIZE-1]!=null)
-            buffert[BUFFERT_SIZE-1].release();
-
-        for(int i = BUFFERT_SIZE-2;i>-1;i--){
-            buffert[i+1] = buffert[i];
-        }
-        Mat toAdd = matrix.clone();
-        Imgproc.cvtColor(toAdd,toAdd,Imgproc.COLOR_BGR2GRAY);
-
-
-        buffert[0] = toAdd;
-    }
-
 
 }

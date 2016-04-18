@@ -139,6 +139,7 @@ GoogleApiClient.OnConnectionFailedListener{
      */
     public void uploadFile(File file, String path, String name, String label){
         fileDetails = new FileDetails(file,path,name,label);
+        Log.d("CLOUD","upload file");
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(driveContentsCallback);
     }
