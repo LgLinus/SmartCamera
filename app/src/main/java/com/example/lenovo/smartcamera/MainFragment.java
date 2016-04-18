@@ -1,10 +1,12 @@
 package com.example.lenovo.smartcamera;
 
 import android.app.Fragment;
+import android.graphics.Camera;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -19,6 +21,8 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+
+import java.lang.reflect.Method;
 
 /**
  * Created by Andreas on 2016-04-05.
@@ -49,7 +53,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        return null;
+        return inputFrame.rgba();
     }
 
     @Override
@@ -73,7 +77,14 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
                 {
                     Log.d("init", "OpenCV loaded successfully");
                     // Load native libs after OpenCV initialization
-                    //camera_view.enableView();
+                    camera_view.enableView();
+
+                    // Make the cameraview visible
+                    camera_view.setVisibility(SurfaceView.VISIBLE);
+                    // Set the listener t   o the implemented CvCameraViewListener
+                    //camera_view.setCvCameraViewListener(this);
+
+
                 }
             }
         }
@@ -109,6 +120,8 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         btn_edge_detection = (Button)rootView.findViewById(R.id.btnEdges);
         btn_plus_gauss = (Button)rootView.findViewById(R.id.btnPlusGauss);
         btn_neg_gauss = (Button)rootView.findViewById(R.id.btnNegGauss);
+
+        camera_view = (CameraBridgeViewBase)rootView.findViewById(R.id.camera_view);
 
         changeStatus(rootView);
 
