@@ -48,7 +48,8 @@ public class ImageManipulation {
             }
         }
 
-        Imgproc.threshold(result_image, result_image, 40, 255, Imgproc.THRESH_BINARY);
+       Imgproc.threshold(result_image, result_image, 40, 255, Imgproc.THRESH_BINARY);
+        //Imgproc.threshold(result_image, result_image, 20, 255, Imgproc.THRESH_BINARY);
 
        // Imgproc.threshold(dst, dst, 0, 255, Imgproc.THRESH_BINARY);
 

@@ -56,7 +56,8 @@ public class MainActivity extends Cloud implements CameraBridgeViewBase.CvCamera
     public static final int NEUTRAL = 0;
     public static final int EDGE_DETECTION = 1;
     public static final int MOTION_DETECTION = 2;
-    final double PEOPLE_LOW_THRESHOLD = 0.01;
+   // final double PEOPLE_LOW_THRESHOLD = 0.01;
+    final double PEOPLE_LOW_THRESHOLD = 0.005;
     /* End of camera variables */
 
     Mat current_frame = null;
