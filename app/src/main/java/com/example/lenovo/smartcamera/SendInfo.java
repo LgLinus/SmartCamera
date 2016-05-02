@@ -14,8 +14,8 @@ import java.net.UnknownHostException;
 public class SendInfo {
 
     Socket sendSocket;
-    //final String IP = "10.2.0.159";
-    final String IP = "192.168.1.17";
+    final String IP = "10.2.0.159";
+   // final String IP = "192.168.1.17";
     final int PORT = 8080;
     PrintWriter pw;
     public SendInfo(){

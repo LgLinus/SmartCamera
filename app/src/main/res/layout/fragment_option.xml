@@ -88,6 +88,7 @@
                         android:id="@+id/start_text"
                         android:inputType="datetime"
                         android:hint="From time 00:00"
+                        android:text="10:15"
                         android:layout_marginLeft="10dp"
                         android:layout_marginRight="10dp"
                         android:layout_marginTop="10dp" />
@@ -112,6 +113,7 @@
                         android:id="@+id/end_text"
                         android:layout_weight="1"
                         android:hint="End Time 00:00"
+                        android:text="12:00"
                         android:hapticFeedbackEnabled="true"
                         android:layout_marginLeft="10dp"
                         android:layout_marginTop="10dp"

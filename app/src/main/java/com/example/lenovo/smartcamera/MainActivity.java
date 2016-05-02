@@ -4,34 +4,16 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.ContextWrapper;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.PowerManager;
 import android.util.Log;
-
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-
-import java.io.File;
-import java.io.FileOutputStream;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
-
 
 /**
  * MainActivity
@@ -56,8 +38,7 @@ public class MainActivity extends Cloud {
     private int second = 1000;
     private int start_time;
     private int interval;
-    private boolean run = false;
-    private Thread timer_thread = null;
+   private Thread timer_thread = null;
 
     //On/Off
     private boolean on = false;
@@ -65,7 +46,7 @@ public class MainActivity extends Cloud {
     //Clock time
     private boolean itIsTime = false;
     private String start_clock, end_clock;
-
+    private Date start, end;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -73,7 +54,6 @@ public class MainActivity extends Cloud {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         //Create the fragments
         option_Fragment = new OptionsFragment();
         main_Fragment = new MainFragment();
@@ -82,6 +62,13 @@ public class MainActivity extends Cloud {
         //Load the menufragment to the display
         fragment_Transaction.replace(R.id.fragment_container, main_Fragment);
         fragment_Transaction.commit();
+
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD); // Unlock the device if locked
+        window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON); // Turn screen on if off
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // Keep screen on
+
+
 
     }
 // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Fragment xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -92,12 +79,20 @@ public class MainActivity extends Cloud {
      */
     public void changeFragment(String id)
     {
+
         if(id.equals("option"))
         {
+            if(timer_thread!=null)
+            {
+                timer_thread.interrupt();
+                timer_thread = null;
+            }
             fragment_Manager = getFragmentManager();
+            option_Fragment = new OptionsFragment();
             fragment_Transaction = fragment_Manager.beginTransaction();
             fragment_Transaction.replace(R.id.fragment_container, option_Fragment);
             fragment_Transaction.commit();
+            option_Fragment.requestFocus();
         }
         else if(id.equals("main"))
         {
@@ -139,10 +134,18 @@ public class MainActivity extends Cloud {
             Calendar cal = Calendar.getInstance();
             SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
             String current_time = sdf.format(cal.getTime());
+            try{
+                Date start = sdf.parse(start_clock);
+                Date end = sdf.parse(end_clock);
+                Date current = sdf.parse(current_time);
+                //If current_time is higher then the start time and lower then the end time, then taking photo is ok.
+                if((current.after(start) && current.before(end))
+                        ||(current.equals(start)||current.equals(end)))
+                    return true;}
+            catch(ParseException e){
 
-            //If current_time is higher then the start time and lower then the end time, then taking photo is ok.
-            if(current_time.compareTo(start_clock) == 1 && current_time.compareTo(end_clock) == -1)
-                return true;
+            }
+
             return false;
         }
 
@@ -167,19 +170,13 @@ public class MainActivity extends Cloud {
      */
     public void setTime(int time) throws InterruptedException
     {
-        //If the thread is running, stop it so the new timer can be applied
-        if(run)
-        {
-            run = false;
-            //Wait for the current thread to end
-            timer_thread.join();
-        }
-        run = true;
         start_time = time;
         interval = time;
 
         timer_thread = new Thread()
         {
+            boolean run = true;
+
             public void run()
             {
                 while(run)
@@ -196,6 +193,7 @@ public class MainActivity extends Cloud {
                         } catch (InterruptedException e)
                         {
                             e.printStackTrace();
+                            run = false;
                         }
                     }
                     //Reset the interval timer
@@ -208,8 +206,19 @@ public class MainActivity extends Cloud {
                             public void run()
                             {
 
-                                Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
-                                main_Fragment.saveImage();
+
+                                Calendar cal = Calendar.getInstance();
+                                SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
+                                String current_time = sdf.format(cal.getTime());
+                                Log.d("MAINACTIVITY","Time start:" + start_clock + "\tTime end:" + end_clock+"\tCurrent_time: "+current_time
+                                +"\nisTrue:"+isItTime());
+                                if(isItTime()&&getStatus()){
+                                    main_Fragment.saveImage();
+                                    Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
+                                }
+                                else{
+                                    Toast.makeText(MainActivity.this,"Not time to take",Toast.LENGTH_SHORT).show();
+                                }
                             }
                         });
                     }

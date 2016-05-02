@@ -38,6 +38,13 @@ public class ImageManipulation {
 
     }
 
+    public static void useErode(Mat src,Mat dst,int size){
+        Imgproc.erode(src, dst, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size, size)));
+    }
+
+    public static void useDilate(Mat src,Mat dst,int size){
+        Imgproc.dilate(src,dst,Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size)));
+    }
     public static void useAbsDiff(Mat average_image, Mat current_image, Mat result_image) {
         for (int i = 0; i < average_image.width(); i++) { // Go through each pixel in the image
             for (int j = 0; j < average_image.height(); j++) {
@@ -48,7 +55,7 @@ public class ImageManipulation {
             }
         }
 
-        Imgproc.threshold(result_image, result_image, 40, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(result_image, result_image, 20, 255, Imgproc.THRESH_BINARY);
 
        // Imgproc.threshold(dst, dst, 0, 255, Imgproc.THRESH_BINARY);
 
@@ -67,7 +74,7 @@ public class ImageManipulation {
         for(int i = 0; i < buffert[0].width();i++){// Go through each pixel
             for(int j = 0; j  < buffert[0].height();j++){
                 int sum = 0;
-                for(int k = 0; k < buffert.length;k++){ // Check each image in buffert
+                for(int k = 0; k < buffert.length;k++){ // Check each image in buffer
                     double[] value = buffert[k].get(j,i);
                     sum+=value[0];
                 }

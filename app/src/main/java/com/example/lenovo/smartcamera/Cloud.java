@@ -63,7 +63,7 @@ GoogleApiClient.OnConnectionFailedListener{
                     .addOnConnectionFailedListener(this)
                     .build();
         }
-        //mGoogleApiClient.connect();
+        mGoogleApiClient.connect();
     }
     /**
      * Handles resolution callbacks.
@@ -78,9 +78,9 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
     /**
-    * Called when activity gets invisible. Connection to Drive service needs to
-    * be disconnected as soon as an activity is invisible.
-    */
+     * Called when activity gets invisible. Connection to Drive service needs to
+     * be disconnected as soon as an activity is invisible.
+     */
     @Override
     protected void onPause() {
         if (mGoogleApiClient != null) {
@@ -139,7 +139,6 @@ GoogleApiClient.OnConnectionFailedListener{
      */
     public void uploadFile(File file, String path, String name, String label){
         fileDetails = new FileDetails(file,path,name,label);
-        Log.d("CLOUD","upload file");
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(driveContentsCallback);
     }
@@ -213,5 +212,4 @@ GoogleApiClient.OnConnectionFailedListener{
     private void showMessage(String msg){
         Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
     }
-
 }
