@@ -61,7 +61,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     private MainFragment frag;
     int counter=-1;
     int ratioCounter = 1;
-
+    double LIGHT_THRESHOLD = 0.85;
 
     public static final int NEUTRAL = 0;
     public static final int EDGE_DETECTION = 1;
@@ -316,23 +316,13 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         // Apply absdiff on new img + median image
         ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output,60);
         double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
-        double LIGHT_THRESHOLD = 1.00;
-
-        //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
         ratioCounter++;
+
         //uploadMatrix(saveMatrix(output,1),1);
         //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
 
         /* Save the relevant matrixes */
-        saveMatrix(absdiff_output,1);
-        saveMatrix(current_low_res_frame,0);
-        saveMatrix(median_matrix,2);
-
-
-        if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
-            uploadMatrix(saveMatrix(current_frame,0),"people in room id:15 ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
-        else if(ratio<LIGHT_THRESHOLD)
-            uploadMatrix(saveMatrix(current_frame,1),"empty room id:15 ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
+        saveImage(ratio);
 
         // Release the created matrix to avoid memory leaks
         median_matrix.release();
@@ -342,6 +332,25 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             buffer[i].release();
         }
         buffer = null;
+    }
+
+    private void saveImage(double ratio){
+    //    saveMatrix(absdiff_output,1);
+    //   saveMatrix(current_low_res_frame,0);
+    //    saveMatrix(median_matrix,2);
+
+
+        if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
+            if(MainActivity.choice == MainActivity.CLOUD)
+            uploadMatrix(saveMatrix(current_frame,0),"people in room id:15 ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
+            else
+                saveMatrix(current_frame,0);
+
+        else if(ratio<LIGHT_THRESHOLD)
+            if(MainActivity.choice == MainActivity.CLOUD)
+                uploadMatrix(saveMatrix(current_frame,1),"empty room id:15 ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
+            else
+                saveMatrix(current_frame,1);
     }
 
     /**
@@ -541,7 +550,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         };
 
    buffert_timer = new Timer();
-        Log.d("MAINFRAGMENT","Value timer: " +  (timer_seconds / ((double)BUFFERT_SIZE+1)) * 1000);
+        Log.d("MAINFRAGMENT", "Value timer: " +  (timer_seconds / ((double)BUFFERT_SIZE + 1)) * 1000);
         buffert_timer.scheduleAtFixedRate(buffert_task,(long)( (timer_seconds / ((double)BUFFERT_SIZE+1)) * 1000),(long) (timer_seconds / ((double)BUFFERT_SIZE + 1)) * 1000); /// 4
     }
 
@@ -553,5 +562,9 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
 
         getView().clearFocus();
         ((MainActivity) getActivity()).changeFragment("option");
+    }
+
+    public void releaseCamera(){
+        this.camera_view.disableView();
     }
 }

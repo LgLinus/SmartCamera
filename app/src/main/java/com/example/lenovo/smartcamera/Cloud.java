@@ -54,16 +54,18 @@ GoogleApiClient.OnConnectionFailedListener{
     @Override
     protected void onResume() {
         super.onResume();
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addApi(Drive.API)
-                    .addScope(Drive.SCOPE_FILE)
-                    .addScope(Drive.SCOPE_APPFOLDER) // required for App Folder sample
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
+        if(MainActivity.choice == MainActivity.CLOUD) {
+            if (mGoogleApiClient == null) {
+                mGoogleApiClient = new GoogleApiClient.Builder(this)
+                        .addApi(Drive.API)
+                        .addScope(Drive.SCOPE_FILE)
+                        .addScope(Drive.SCOPE_APPFOLDER) // required for App Folder sample
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this)
+                        .build();
+            }
+            mGoogleApiClient.connect();
         }
-        mGoogleApiClient.connect();
     }
     /**
      * Handles resolution callbacks.
@@ -71,6 +73,8 @@ GoogleApiClient.OnConnectionFailedListener{
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent data) {
+        if(MainActivity.choice != MainActivity.CLOUD)
+            return;
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_RESOLUTION && resultCode == RESULT_OK) {
             mGoogleApiClient.connect();
@@ -95,6 +99,8 @@ GoogleApiClient.OnConnectionFailedListener{
      */
     @Override
     public void onConnectionFailed(ConnectionResult result) {
+        if(MainActivity.choice != MainActivity.CLOUD)
+            return;
         Log.i(TAG, "GoogleApiClient connection failed: " + result.toString());
         if (!result.hasResolution()) {
             // show the localized error dialog.
@@ -122,6 +128,7 @@ GoogleApiClient.OnConnectionFailedListener{
      */
     @Override
     public void onConnectionSuspended(int cause) {
+
         Log.i(TAG, "GoogleApiClient connection suspended");
     }
     /**
@@ -169,6 +176,12 @@ GoogleApiClient.OnConnectionFailedListener{
                                 while ((bytesRead = is.read(buf)) > 0) {
                                     outputStream.write(buf, 0, bytesRead);
                                 }
+
+
+                                if(fileDetails.getFile().delete())
+                                    Log.d("CLOUD","Deleted file");
+                                else
+                                    Log.d("CLOUD","File was not deleted");
 
                                 outputStream.close();
                                 is.close();

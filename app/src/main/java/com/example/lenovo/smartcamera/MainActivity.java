@@ -1,12 +1,17 @@
 package com.example.lenovo.smartcamera;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -23,7 +28,10 @@ public class MainActivity extends Cloud {
     // Used to display footage
     //CameraBridgeViewBase camera_view;
 
-
+    private final String PREFS_NAME ="myPrefs";
+    private final String KEY_CHOICE = "choice";
+    public static final int CLOUD = 1;
+    public static final int LOCAL = 0;
      //    ---.---  Fragment ---.--- //
 
     private Fragment fragment;
@@ -48,6 +56,7 @@ public class MainActivity extends Cloud {
     private String start_clock, end_clock;
     private Date start, end;
 
+    public static int choice = -1;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -68,9 +77,60 @@ public class MainActivity extends Cloud {
         window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON); // Turn screen on if off
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // Keep screen on
 
-
+        checkStorageType();
 
     }
+
+    /**
+     * Checks if the user have chosen a storage type, 0 = Local, 1 = cloud
+     */
+    private void checkStorageType(){
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        int choice = prefs.getInt(KEY_CHOICE,-1);
+        this.choice = choice;
+        Log.d("MAINACTIVITY", "CHOICE: " + choice);
+        // If the user havn't made a choice before, force him to do it
+        if(choice == -1){
+            showChoice(prefs);
+        }
+    }
+
+    // Show the choice of storage type
+    private void showChoice(SharedPreferences prefs){
+        final SharedPreferences.Editor editor = prefs.edit();
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setMessage("Would you like to store files locally or on the cloud?\nThis can be changed again in options");
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("Local", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                editor.putInt(KEY_CHOICE, LOCAL);
+                editor.commit();
+                choice = LOCAL;
+                dialog.cancel();
+
+                Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                startActivity(i);
+                finish();
+            }
+        });
+
+        builder.setNegativeButton("Cloud", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                editor.putInt(KEY_CHOICE, CLOUD);
+                editor.commit();
+                choice = CLOUD;
+                dialog.cancel();
+                Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                startActivity(i);
+                finish();
+            }
+        });
+
+        builder.create().show();
+    }
+
 // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Fragment xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
     /**
@@ -102,6 +162,12 @@ public class MainActivity extends Cloud {
             fragment_Transaction.commit();
         }
 
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        this.main_Fragment.releaseCamera();
     }
 //-----------------------------  Triggers ---------------------------
 
