@@ -45,7 +45,7 @@ public class ImageManipulation {
     public static void useDilate(Mat src,Mat dst,int size){
         Imgproc.dilate(src,dst,Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size)));
     }
-    public static void useAbsDiff(Mat average_image, Mat current_image, Mat result_image) {
+    public static void useAbsDiff(Mat average_image, Mat current_image, Mat result_image, int threshold) {
         for (int i = 0; i < average_image.width(); i++) { // Go through each pixel in the image
             for (int j = 0; j < average_image.height(); j++) {
                 double[] first = average_image.get(j, i); // Retrieve pixel values
@@ -55,7 +55,7 @@ public class ImageManipulation {
             }
         }
 
-        Imgproc.threshold(result_image, result_image, 20, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(result_image, result_image, threshold, 255, Imgproc.THRESH_BINARY);
 
        // Imgproc.threshold(dst, dst, 0, 255, Imgproc.THRESH_BINARY);
 

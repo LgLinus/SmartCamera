@@ -42,6 +42,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
 {
 
 
+    public static boolean CLOUD = true;
     private ImageButton btn_Option;
     private Button btnCapture, btn_edge_detection, btn_plus_gauss, btn_neg_gauss;
     private View view;
@@ -293,11 +294,17 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
      */
     public void saveImage(){
         Log.d("MAINFRAGMENT","save image");
-        if(buffer ==null)
+        if(this.buffer ==null)
             return;
         Mat median_matrix,current_low_res_frame;
 
         // Acquire medaian image
+        Mat[] buffer = new Mat[this.buffer.length];
+
+        for(int i = 0; i < buffer.length;i++){
+            buffer[i] = this.buffer[i].clone();
+        }
+
         median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2, buffer));
         // matrix = ImageManipulation.acquireMedian(buffer);
         // Resize current image
@@ -307,11 +314,11 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         Mat absdiff_output = new Mat(median_matrix.height(),median_matrix.width(), CvType.CV_8UC1);
 
         // Apply absdiff on new img + median image
-        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output);
+        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output,60);
         double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
+        double LIGHT_THRESHOLD = 1.00;
 
-
-        send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
+        //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
         ratioCounter++;
         //uploadMatrix(saveMatrix(output,1),1);
         //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
@@ -321,14 +328,139 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         saveMatrix(current_low_res_frame,0);
         saveMatrix(median_matrix,2);
 
-        if(ratio>=PEOPLE_LOW_THRESHOLD)
-            uploadMatrix(saveMatrix(current_frame,0),"people in room id:11 ratio:"+ratio);
-        else
-            uploadMatrix(saveMatrix(current_frame,1),"empty room id:11 ratio:"+ratio);
+
+        if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
+            uploadMatrix(saveMatrix(current_frame,0),"people in room id:15 ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
+        else if(ratio<LIGHT_THRESHOLD)
+            uploadMatrix(saveMatrix(current_frame,1),"empty room id:15 ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
 
         // Release the created matrix to avoid memory leaks
         median_matrix.release();
         absdiff_output.release();
+
+        for(int i = 0; i < buffer.length;i++){
+            buffer[i].release();
+        }
+        buffer = null;
+    }
+
+    /**
+     * Save the image currently being displayed
+     */
+    public void saveImageTetes(){
+        Log.d("MAINFRAGMENT","save image");
+        if(this.buffer ==null)
+            return;
+        Mat median_matrix,current_low_res_frame;
+
+        // Acquire medaian image
+        Mat[] buffer = new Mat[this.buffer.length];
+
+        for(int i = 0; i < buffer.length;i++){
+            buffer[i] = this.buffer[i].clone();
+        }
+
+        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2, buffer));
+        // matrix = ImageManipulation.acquireMedian(buffer);
+        // Resize current image
+        current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
+        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
+
+        for(int i = 0; i <7;i++) {
+            Mat absdiff_output = new Mat(median_matrix.height(), median_matrix.width(), CvType.CV_8UC1);
+
+            // Apply absdiff on new img + median image
+            ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output, 40 + (i*10));
+            double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
+            double LIGHT_THRESHOLD = 1.00;
+
+            //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
+            ratioCounter++;
+            //uploadMatrix(saveMatrix(output,1),1);
+            //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
+
+        /* Save the relevant matrixes */
+          //  saveMatrix(absdiff_output, 1);
+            //saveMatrix(current_low_res_frame, 0);
+            //saveMatrix(median_matrix, 2);
+
+
+            if (ratio >= PEOPLE_LOW_THRESHOLD && ratio < LIGHT_THRESHOLD)
+                uploadMatrix(saveMatrix(current_frame, i+1), "people in room id:13 ratio:" + ratio, "people_in_room_b"+(40+(i*10))+"_0.1");
+            else if (ratio < LIGHT_THRESHOLD)
+                uploadMatrix(saveMatrix(current_frame, i+1), "empty room id ratio:" + ratio, "empty_room"+(40+(i*10))+"_0.1");
+
+            if(ratio>=0.01&& ratio<LIGHT_THRESHOLD)
+                uploadMatrix(saveMatrix(current_frame, i), "people in id:3 ratio:" + ratio, "people_in_room_b"+(40+(i*10))+"_1");
+            else if (ratio < LIGHT_THRESHOLD)
+                uploadMatrix(saveMatrix(current_frame, i+1), "empty room id:3 ratio:" + ratio, "empty_room"+(40+(i*10))+"_1");
+
+
+            Log.d("MAINFRAGMENT","went through once");
+
+
+            absdiff_output.release();
+        }
+        // Release the created matrix to avoid memory leaks
+        median_matrix.release();
+
+        for (int j = 0; j < buffer.length; j++) {
+            buffer[j].release();
+        }
+        buffer = null;
+    }
+
+    /**
+     * Save the image currently being displayed
+     */
+    public void saveImageTestResize() {
+        int size = 1;
+        Log.d("MAINFRAGMENT", "save image");
+        for(size = 1; size < 8; size++){
+        long startTime = System.currentTimeMillis();
+
+        if (this.buffer == null)
+            return;
+        Mat median_matrix, current_low_res_frame;
+
+        // Acquire medaian image
+        Mat[] buffer = new Mat[this.buffer.length];
+
+        for (int i = 0; i < buffer.length; i++) {
+            buffer[i] = this.buffer[i].clone();
+        }
+
+        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(size, size, buffer));
+        // matrix = ImageManipulation.acquireMedian(buffer);
+        // Resize current image
+        current_low_res_frame = ImageManipulation.resizeImage(size, size, current_frame);
+        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
+
+        Mat absdiff_output = new Mat(median_matrix.height(), median_matrix.width(), CvType.CV_8UC1);
+
+        // Apply absdiff on new img + median image
+        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output,40);
+        double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
+        double LIGHT_THRESHOLD = 1.00;
+
+            this.uploadMatrix(this.saveMatrix(current_low_res_frame,size),"rescale:1","rescale:1");
+
+        //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
+        ratioCounter++;
+
+        // Release the created matrix to avoid memory leaks
+        median_matrix.release();
+        absdiff_output.release();
+
+        for (int i = 0; i < buffer.length; i++) {
+            buffer[i].release();
+        }
+        buffer = null;
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        Log.d("MainFragment", "time taken for: " + size + "\t" + elapsedTime);
+    }
     }
 
     // ------------------------------- Image Handling
@@ -344,7 +476,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
 
         Date date = new Date();
         Log.d("MAINACTIVITY", "code: " + code);
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyy/mm/dd_hh:mm:ss");
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyy/MM/dd_hh:mm:ss");
 
         String filename = "test"+String.valueOf(code);
 
@@ -375,10 +507,10 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
      * @param file to upload
      * @param tag to add to file ending
      */
-    public void uploadMatrix(File file, String tag){
+    public void uploadMatrix(File file, String tag, String file_tag){
         Date date = new Date();
-        SimpleDateFormat ft = new SimpleDateFormat("yyyy/mm/dd:hh:ss");
-        ((MainActivity)getActivity()).uploadFile(file, "filepath", ft.format(date) + "1234", tag);
+        SimpleDateFormat ft = new SimpleDateFormat("yyyy/MM/dd_kk_mm_ss");
+        ((MainActivity)getActivity()).uploadFile(file, "filepath", file_tag+"_"+ft.format(date) + "1234", tag);
 
     }
 
@@ -408,7 +540,9 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             }
         };
 
-   buffert_timer = new Timer();buffert_timer.scheduleAtFixedRate(buffert_task,( (timer_seconds / (BUFFERT_SIZE)) * 1000)-1000, (timer_seconds / (BUFFERT_SIZE + 2)) * 1000); /// 4
+   buffert_timer = new Timer();
+        Log.d("MAINFRAGMENT","Value timer: " +  (timer_seconds / ((double)BUFFERT_SIZE+1)) * 1000);
+        buffert_timer.scheduleAtFixedRate(buffert_task,(long)( (timer_seconds / ((double)BUFFERT_SIZE+1)) * 1000),(long) (timer_seconds / ((double)BUFFERT_SIZE + 1)) * 1000); /// 4
     }
 
     private void gotoOptions(){

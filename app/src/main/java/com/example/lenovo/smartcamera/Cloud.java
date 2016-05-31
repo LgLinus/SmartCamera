@@ -138,7 +138,7 @@ GoogleApiClient.OnConnectionFailedListener{
      * @param label description
      */
     public void uploadFile(File file, String path, String name, String label){
-        fileDetails = new FileDetails(file,path,name,label);
+        fileDetails = new FileDetails(file,path,name+".png",label);
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(driveContentsCallback);
     }

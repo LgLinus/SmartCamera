@@ -79,7 +79,7 @@ public class MainActivity extends Cloud {
      */
     public void changeFragment(String id)
     {
-
+    Log.d("MAINACTIVITY","chane fragment");
         if(id.equals("option"))
         {
             if(timer_thread!=null)
@@ -213,7 +213,9 @@ public class MainActivity extends Cloud {
                                 Log.d("MAINACTIVITY","Time start:" + start_clock + "\tTime end:" + end_clock+"\tCurrent_time: "+current_time
                                 +"\nisTrue:"+isItTime());
                                 if(isItTime()&&getStatus()){
+                                   // main_Fragment.saveImageTetes();
                                     main_Fragment.saveImage();
+                                    //main_Fragment.saveImageTestResize();
                                     Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
                                 }
                                 else{
@@ -228,15 +230,6 @@ public class MainActivity extends Cloud {
         timer_thread.start();
        main_Fragment.setTimerMedianfilter(time);
     }
-//  GAAUUSS AND SHIIIEEET
-    /*public void setEdgeDetection()
-    {
-        edgeDetection = !edgeDetection;
-    }
-    public void setKernel_size(int size)
-    {
-        kernel_size*= size;
-    }*/
 
     /**
      * Method used to return a string given the given input
