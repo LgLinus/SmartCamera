@@ -42,15 +42,11 @@ GoogleApiClient.OnConnectionFailedListener {
     private static final String TAG = "Drive_class";
     private static DriveFolder parent_folder;
 
+
     /**
      * Request code for auto Google Play Services error resolution.
      */
     protected static final int REQUEST_CODE_RESOLUTION = 1;
-
-    /**
-     * Next available request code.
-     */
-    protected static final int NEXT_AVAILABLE_REQUEST_CODE = 2;
 
     /**
      * Called when activity gets visible. A connection to Drive services need to
@@ -74,7 +70,7 @@ GoogleApiClient.OnConnectionFailedListener {
     }
 
     /**
-     * Handles resolution callbacks.
+     * Handles conncetion callbacks.
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
@@ -109,6 +105,7 @@ GoogleApiClient.OnConnectionFailedListener {
             // show the localized error dialog.
             GoogleApiAvailability.getInstance().getErrorDialog(this, result.getErrorCode(), 0).show();
             return;
+
         }
         try {
             result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
@@ -123,8 +120,6 @@ GoogleApiClient.OnConnectionFailedListener {
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "GoogleApiClient connected");
-        //   Drive.DriveApi.newDriveContents(getGoogleApiClient())
-        //          .setResultCallback(driveContentsCallback);
 
         DriveFolder parent = Drive.DriveApi.getRootFolder(mGoogleApiClient);
         this.folder_exists(this.folder, parent);
@@ -132,7 +127,9 @@ GoogleApiClient.OnConnectionFailedListener {
     }
 
     /**
-     * Creates the neccesary folders on Google Drive
+     * Creates the folder to store images in
+     * @param folder_name
+     * @param parent, folder to store the new folder in
      */
     public void createFolders(String folder_name, DriveFolder parent){
         MetadataChangeSet dataSet = new MetadataChangeSet.Builder().setTitle(folder_name).build();
@@ -154,6 +151,7 @@ GoogleApiClient.OnConnectionFailedListener {
 
     }
 
+    /* Callback used to handle the response from searching the folder */
     ResultCallback<DriveApi.MetadataBufferResult> childrenRetrievedCallback = new
             ResultCallback<DriveApi.MetadataBufferResult>() {
                 @Override
@@ -163,15 +161,13 @@ GoogleApiClient.OnConnectionFailedListener {
                         return;
                     }
                     if((parent_folder=checkFolder(result.getMetadataBuffer(),folder))!=null){
-                        showMessage("Found folder");
+                        //howMessage("Found folder");
                     }
                     else{
-                        showMessage("Folder not found, creating it");
+                        //showMessage("Folder not found, creating it");
                         DriveFolder parent = Drive.DriveApi.getRootFolder(mGoogleApiClient);
                         createFolders(folder,parent);
                     }
-                    showMessage("retriseved" + result.getMetadataBuffer().toString());
-                    showMessage("Successfully listed files.");
                 }
             };
 
@@ -235,7 +231,7 @@ GoogleApiClient.OnConnectionFailedListener {
                 }
             };
 
-    // Callback uesd to upload a file, called from method uploadFile()
+    /*  Callback uesd to upload a file, called from method uploadFile() */
     final protected ResultCallback<DriveApi.DriveContentsResult> driveContentsCallback = new
             ResultCallback<DriveApi.DriveContentsResult>() {
                 @Override
@@ -292,6 +288,7 @@ GoogleApiClient.OnConnectionFailedListener {
                 }
             };
 
+    /* Callback used to handle file created responses*/
     final private ResultCallback<DriveFolder.DriveFileResult> fileCallback = new
             ResultCallback<DriveFolder.DriveFileResult>() {
                 @Override

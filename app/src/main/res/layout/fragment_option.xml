@@ -27,8 +27,8 @@
             <ImageButton
                 android:layout_width="80dp"
                 android:layout_height="match_parent"
-                android:id="@+id/btn_Back"
-                android:src="@drawable/icon_options"
+                android:id="@+id/btn_back"
+                android:src="@drawable/backarrow"
                 android:scaleType="fitCenter"
                 android:background="#010101"
                 />
@@ -59,109 +59,109 @@
             android:layout_marginRight="5dp" />
 
         <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:weightSum="1">
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:weightSum="1"
+            android:paddingTop="5dp">
 
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:ems="10"
-                    android:id="@+id/interval_text"
-                    android:hint="Time Intervall"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:layout_marginTop="20dp" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <EditText
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/start_text"
-                        android:inputType="datetime"
-                        android:hint="From time 00:00"
-                        android:text="10:15"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp"
-                        android:layout_marginTop="10dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="20dp"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="-"
-                        android:id="@+id/textView"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp"
-                        android:layout_marginTop="10dp" />
-
-                    <EditText
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:inputType="datetime"
-                        android:id="@+id/end_text"
-                        android:layout_weight="1"
-                        android:hint="End Time 00:00"
-                        android:text="12:00"
-                        android:hapticFeedbackEnabled="true"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginRight="10dp" />
-                </LinearLayout>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:ems="10"
+                android:id="@+id/interval_text"
+                android:hint="Time Intervall"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="20dp" />
 
             <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:id="@+id/start_text"
+                    android:inputType="datetime"
+                    android:hint="From time 00:00"
+                    android:text="10:15"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginTop="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20dp"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="-"
+                    android:id="@+id/textView"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginTop="10dp" />
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:inputType="datetime"
+                    android:id="@+id/end_text"
+                    android:layout_weight="1"
+                    android:hint="End Time 00:00"
+                    android:text="12:00"
+                    android:hapticFeedbackEnabled="true"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginRight="10dp" />
+            </LinearLayout>
+
+            <RelativeLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="0.07"
                 android:layout_marginTop="10dp"
                 android:layout_marginRight="10dp"
-                android:layout_marginLeft="5dp">
+                android:layout_marginLeft="5dp"
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=" Take Pictures Status:"
-                        android:textSize="20dp"
-                        android:id="@+id/textView2"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginLeft="5dp"
-                        android:layout_gravity="center"
-                        android:layout_marginBottom="10dp"
-                        style="@style/Base.Theme.AppCompat.Light.DialogWhenLarge"
-                        android:textStyle="bold"
-                        android:layout_marginRight="10dp" />
+                android:weightSum="1">
 
-                    <Switch
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:text="Off/On"
-                        android:textSize="20dp"
-                        android:id="@+id/btn_status"
-                        android:layout_weight="0.45"
-                        android:checked="false"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginRight="5dp"
-                        android:layout_gravity="center"
-                        android:layout_marginBottom="10dp" />
-                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Store on cloud(checked) or local(unchecked):"
+                    android:textSize="15dp"
+                    android:id="@+id/textView2"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginLeft="5dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="10dp"
+                    style="@style/Base.Theme.AppCompat.Light.DialogWhenLarge"
+                    android:layout_alignParentLeft="true"
+                    android:textStyle="bold"
+                    android:layout_marginRight="10dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/cb_storage"
+                    android:layout_marginTop="5dp"
+                    android:layout_alignParentRight="true"
+                    android:textSize="20dp" />
+
+            </RelativeLayout>
 
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Confirm"
-                android:id="@+id/btn_Confirm"
+                android:id="@+id/btn_confirm"
                 android:background="#040404"
                 android:textColor="#f9f6f6"
                 android:layout_marginRight="25dp"

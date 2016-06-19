@@ -16,7 +16,7 @@
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="48dp"
+            android:layout_height="60dp"
             android:weightSum="1"
             android:background="#000000">
 
@@ -42,65 +42,32 @@
 
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="fill_parent"
-            android:layout_height="72dp">
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/btnPlusGauss"
-                android:text="+Gauss" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/btnNegGauss"
-                android:text="-Gauss"
-                android:layout_weight="1" />
-
-            <Button
-                android:layout_width="121dp"
-                android:layout_height="wrap_content"
-                android:id="@+id/btnEdges"
-                android:text="Edge detection" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/btnCapture"
-                android:text="Take photo"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="138dp"
             android:id="@+id/color_layout"
-            android:background="#990a0f">
+            android:background="#000000">
 
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="Off"
-                android:textSize="60dp"
-                android:id="@+id/text_status"
-                android:layout_weight="1"
-                android:textColor="#ffffff"
-                android:textStyle="bold"
-                android:gravity="center" />
+            <ImageButton
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/btn_OnOff"
+                android:layout_gravity="center_vertical"
+                android:scaleType="fitCenter"
+                android:background="@drawable/off" />
         </LinearLayout>
 
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="481dp">
+            android:layout_height="481dp"
+            android:weightSum="1">
 
             <org.opencv.android.JavaCameraView
                 android:layout_width="fill_parent"
                 android:layout_height="311dp"
-                android:id="@+id/camera_view" />
+                android:id="@+id/camera_view"
+                android:layout_weight="0.35" />
         </LinearLayout>
 
     </LinearLayout>

@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -19,26 +20,20 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 /**
+ * This class contains the settings option that will control how often an image is taken, when an image is taken and where
+ * the images should be stored.
  * Created by Andreas on 2016-03-30.
  */
 public class OptionsFragment extends Fragment
 {
-    //------ Setting variables ------
-    private int interval;
-    private boolean on = false;
-    private boolean human;
-
-    private String hour_start, hour_end, minute_start, minute_end;
-
-    private ImageButton btn_Back;
-    private Button btn_Confirm;
-
-    private Switch btn_Switch;
-    private TextView text_view;
-
+    private ImageButton btn_back;
+    private CheckBox cb_storage;
+    private Button btn_confirm;
     private View view;
     private EditText et_i,et_s,et_e;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
@@ -56,48 +51,28 @@ public class OptionsFragment extends Fragment
 
         return view;
     }
-    public void mainMenu(View view)
-    {
-        ((MainActivity)getActivity()).changeFragment("main");
-    }
-
     public void requestFocus(){
 
     }
-
-    @Override
-    public void onAttach(Activity bundle){
-        super.onAttach(bundle);
-        if(et_i==null||view==null||getActivity()==null)
-            return;
-        Context context = getActivity().getApplicationContext();
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        et_i.requestFocus();
-        InputMethodManager imm = (InputMethodManager) (getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE));
-        imm.hideSoftInputFromWindow(et_i.getWindowToken(), InputMethodManager.SHOW_IMPLICIT);
-        imm.showSoftInput(et_i, InputMethodManager.SHOW_IMPLICIT);
-
-    }
-
     private void initiateListeners(final View rootView)
     {
-        btn_Back = (ImageButton) rootView.findViewById(R.id.btn_Back);
-        btn_Confirm = (Button) rootView.findViewById(R.id.btn_Confirm);
+        btn_back = (ImageButton) rootView.findViewById(R.id.btn_back);
+        cb_storage = (CheckBox) rootView.findViewById(R.id.cb_storage);
+        btn_confirm = (Button)rootView.findViewById(R.id.btn_confirm);
 
-        btn_Switch = (Switch) rootView.findViewById(R.id.btn_status);
-        text_view = (TextView)rootView.findViewById(R.id.text_status);
+        if(((MainActivity)getActivity()).getCloudStorage()==MainActivity.CLOUD)
+            cb_storage.setChecked(true);
+        else
+            cb_storage.setChecked(false);
 
-        btn_Back.setOnClickListener(new View.OnClickListener()
-        {
+        btn_back.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
-                ((MainActivity)getActivity()).changeFragment("main");
+            public void onClick(View v) {
+                ((MainActivity) getActivity()).changeFragment("main");
 
             }
         });
-        btn_Confirm.setOnClickListener(new View.OnClickListener()
-        {
+        btn_confirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
@@ -109,33 +84,35 @@ public class OptionsFragment extends Fragment
 
         });
     }
+
+    /**
+     * Confirms and execute the chosen settings
+     * @throws InterruptedException
+     */
     public void confirm() throws InterruptedException
     {
         try
         {
-            if(!btn_Switch.isChecked()){
-                ((MainActivity)getActivity()).onOff(false);
-                ((MainActivity) getActivity()).changeFragment("main");
-                return;
-            }
-
-             if(!isEmpty(et_s)&&(!isEmpty(et_e)))
+            MainActivity mainActivity = (MainActivity)getActivity();
+            if(!isEmpty(et_s)&&(!isEmpty(et_e)))
             {
-                ((MainActivity) getActivity()).setClockTime(et_s.getText().toString(), et_e.getText().toString());
+               mainActivity.setClockTime(et_s.getText().toString(), et_e.getText().toString());
             }
 
-            Toast.makeText(((MainActivity) getActivity()), "Confirmed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(((MainActivity)getActivity()), "Confirmed", Toast.LENGTH_SHORT).show();
 
-            ((MainActivity) getActivity()).onOff(true);
-                if(!isEmpty(et_i))
-                {
-                    interval = Integer.parseInt(et_i.getText().toString());
-                    ((MainActivity) getActivity()).setTime(interval);
-                }
+            if(!isEmpty(et_i))
+            {
+                int interval = Integer.parseInt(et_i.getText().toString());
+                mainActivity.setTime(interval);
+            }
+            if(cb_storage.isChecked())
+                mainActivity.setCloudStorage(true);
+            else
+                mainActivity.setCloudStorage(false);
 
-            ((MainActivity) getActivity()).onOff(true);
-            ((MainActivity) getActivity()).changeFragment("main");
-
+            mainActivity.changeFragment("main");
+            mainActivity.onOff(true);
         }
         catch(Exception e)
         {
@@ -145,6 +122,12 @@ public class OptionsFragment extends Fragment
 
 
     }
+
+    /**
+     * Check if an option is empty
+     * @param etText: The edit text that contains a setting.
+     * @return True if options empty, false if option contain text.
+     */
     private boolean isEmpty(EditText etText)
     {
         return etText.getText().toString().trim().length() == 0;

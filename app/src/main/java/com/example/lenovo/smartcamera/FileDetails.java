@@ -6,15 +6,14 @@ import java.io.File;
 
 /**
  * Class used to store various data regarding details about the file to be uploaded
- * Created by Linus on 2016-02-02.
+ * Created by Linus on 2016-03-11.
  */
-public class FileDetails {
-
+public class FileDetails
+{
     private String file_name;
     private File file;
     private String path;
     private String label;
-
     /**
      * Create the object with given name
      * @param file file to upload
@@ -22,7 +21,8 @@ public class FileDetails {
      * @param name name of file to upload
      * @param label tag for the image
      */
-    public FileDetails(File file, String path, String name, String label) {
+    public FileDetails(File file, String path, String name, String label)
+    {
         this.file = file;
         this.path = path;
         this.label = label;
@@ -31,12 +31,8 @@ public class FileDetails {
             this.file_name = "image";
         else
             this.file_name = name;
-
-
     }
-
     // Get methods below
-
     public String getFile_name(){
         return this.file_name;
     }

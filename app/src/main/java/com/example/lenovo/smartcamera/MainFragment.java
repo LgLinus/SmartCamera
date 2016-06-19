@@ -36,41 +36,29 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Created by Andreas on 2016-04-05.
+ * This class handles takes images, put them in a buffer, decide if people is in the room and upploads/save labeled images
+ * Created by Linus & Andreas on 2016-04-05.
  */
 public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCameraViewListener2
 {
-
-
     public static boolean CLOUD = true;
     private ImageButton btn_Option;
-    private Button btnCapture, btn_edge_detection, btn_plus_gauss, btn_neg_gauss;
     private View view;
     private Timer buffert_timer;
     Mat current_frame = null;
     Mat old_frame,older_frame;
     Mat output_frame;
     Mat fg,bg;
-    private final int BUFFERT_SIZE = 2;
+    private int BUFFERT_SIZE = 2;
     Mat[] buffer;
-    final int ORIGINAL = 0;
-    final int ABSDIFF = 1;
-    public static final int BUFFERUPDATESECONDS = 5;
     private TimerTask buffert_task;
     private MainFragment frag;
-    int counter=-1;
-    int ratioCounter = 1;
-
-
-    public static final int NEUTRAL = 0;
-    public static final int EDGE_DETECTION = 1;
-    public static final int MOTION_DETECTION = 2;
-    final double PEOPLE_LOW_THRESHOLD = 0.001;
-    // Current image
-    boolean edgeDetection = false;
-    int kernel_size = 4;
-
+    double LIGHT_THRESHOLD = 0.85;
     CameraBridgeViewBase camera_view;
+
+    final double PEOPLE_LOW_THRESHOLD = 0.001;
+    ImageButton btn_OnOff;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
@@ -80,6 +68,11 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         return view;
     }
 
+    /**
+     * Initiate the camera settings
+     * @param width :  the width of the frames that will be delivered
+     * @param height : the height of the frames that will be delivered
+     */
     @Override
     public void onCameraViewStarted(int width, int height)
     {
@@ -89,103 +82,76 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         this.fg = new Mat();
         this.older_frame = new Mat();
         this.old_frame = new Mat();
-        this.buffer = new Mat[BUFFERT_SIZE];
     }
     /**
-     * Adds the given matrix to the buffer and release the last matrix in buffer
-     * @param matrix
+     * Adds an image to the buffer and release the last image in buffer
+     * @param matrix: The image that will be added.
      */
-    public void addBuffer(Mat matrix){
-        if(buffer ==null){
+    public void addBuffer(Mat matrix)
+    {
+        if(matrix==null)
+            return;
+        //Buffer is empty
+        if(buffer ==null)
+        {
             buffer= new Mat[BUFFERT_SIZE];
-            return;}
-        else if(matrix==null){
             return;
         }
+        // IF there is no image :(
+        else if(matrix==null)
+            return;
 
+        //If the buffer is full, release the last image
         if(buffer[BUFFERT_SIZE-1]!=null)
             buffer[BUFFERT_SIZE-1].release();
 
-        for(int i = BUFFERT_SIZE-2;i>-1;i--){
+        //Moves all the images one step in the buffer
+        for(int i = BUFFERT_SIZE-2;i>-1;i--)
             buffer[i+1] = buffer[i];
-        }
 
         Mat toAdd = matrix.clone();
-        Imgproc.cvtColor(toAdd,toAdd,Imgproc.COLOR_BGR2GRAY);
+        Imgproc.cvtColor(toAdd, toAdd, Imgproc.COLOR_BGR2GRAY);
 
         buffer[0] = toAdd;
     }
 
-    public void onCameraViewStopped()
-    {
-    }
+    public void onCameraViewStopped() {}
 
+    /**
+     * This method take pictures
+     * @param inputFrame
+     * @return
+     */
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-
+        //Give the image colors
         current_frame = inputFrame.rgba();
-
-        // Apply blurring
-        if (kernel_size > 0)
-            Imgproc.GaussianBlur(current_frame, current_frame, new Size(kernel_size + 1, kernel_size + 1), 0);
 
         if(output_frame!=null)
             output_frame.release();
 
+
         output_frame = current_frame.clone();
-
-        // Turn output frame matrix gray
-        Imgproc.cvtColor(output_frame, output_frame, Imgproc.COLOR_BGR2GRAY);
-
-       /* switch (state) {
-
-            case MOTION_DETECTION:
-                if (counter == 0 || counter == -1) {
-                    older_frame = old_frame;
-                    old_frame = current_frame;
-                    counter++;
-                }
-                counter %= 350;
-
-                if (older_frame != null && old_frame != null && (older_frame.width() == old_frame.width())) {
-
-                    ImageManipulation.MotionDetection(older_frame,old_frame,fg,bg,output_frame,kernel_size);
-                    fg.release();
-                    bg.release();
-                    older_frame.release();
-                }
-                break;
-
-            case EDGE_DETECTION:
-                int lowerThreshold = 55; //155
-                double ratio = 1.10; // 1.25
-                if(old_frame!=null){
-                    old_frame.release();
-                    old_frame = null;
-                }
-                if(older_frame!=null){
-                    older_frame.release();
-                    older_frame = null;
-                }
-                // Apply edge_detection with the given thresholds and matrixes
-                Imgproc.Canny(output_frame, output_frame, lowerThreshold, (int) lowerThreshold * (ratio));
-                break;
-        }*/
+        //The this image will be put the the mainfragment JCameraField
         return output_frame;
-
     }
-
     @Override
     public void onResume()
     {
         super.onResume();
         initOpenCV();
     }
+    /**
+     * Initiate openCV
+     */
     private void initOpenCV()
     {
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, ((MainActivity) getActivity()), mLoaderCallback);
     }
+    /**
+     * Iniaiate camera functions and enable JCamerField to work
+     */
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(((MainActivity) getActivity()))
     {
         @Override
@@ -203,52 +169,29 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
                     camera_view.setVisibility(SurfaceView.VISIBLE);
                     camera_view.setCvCameraViewListener(frag);
                     camera_view.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
-
-                    // Set the listener t   o the implemented CvCameraViewListener
-                    //camera_view.setCvCameraViewListener(this);
-
-
                 }
             }
         }
     };
+    /**
+     * Change Fragment
+     * @param view
+     */
     public void optionMenu(View view)
     {
         ((MainActivity)getActivity()).changeFragment("option");
     }
-    public void changeStatus(View rv)
-    {
-        TextView text_view;
-        LinearLayout ll;
-        ll = (LinearLayout) rv.findViewById(R.id.color_layout);
-        text_view = (TextView) rv.findViewById(R.id.text_status);
-        if(((MainActivity)getActivity()).getStatus())
-        {
-            ll.setBackgroundColor(Color.GREEN);
-            text_view.setText("On");
-            Toast.makeText(((MainActivity) getActivity()), "On", Toast.LENGTH_SHORT).show();
-        }
-        else
-        {
-            ll.setBackgroundColor(Color.RED);
-            text_view.setText("Off");
-            Toast.makeText(((MainActivity) getActivity()), "Off", Toast.LENGTH_SHORT).show();
-        }
-    }
+
+    /**
+     * Initiate listeners
+     * @param rootView
+     */
     private void initiateListeners(View rootView)
     {
         btn_Option = (ImageButton) rootView.findViewById(R.id.btn_Option);
-
-        btnCapture = (Button)rootView.findViewById(R.id.btnCapture);
-        btn_edge_detection = (Button)rootView.findViewById(R.id.btnEdges);
-        btn_plus_gauss = (Button)rootView.findViewById(R.id.btnPlusGauss);
-        btn_neg_gauss = (Button)rootView.findViewById(R.id.btnNegGauss);
+        btn_OnOff = (ImageButton) rootView.findViewById(R.id.btn_OnOff);
 
         camera_view = (CameraBridgeViewBase)rootView.findViewById(R.id.camera_view);
-
-        camera_view.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
-        changeStatus(rootView);
-
 
         btn_Option.setOnClickListener(new View.OnClickListener()
         {
@@ -258,36 +201,24 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
                 gotoOptions();
             }
 
-        });/*
-        btnCapture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-            }
         });
-        btn_edge_detection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                //((MainActivity) getActivity()).apa();
-                //((MainActivity) getActivity()).setEdgeDetection();
-            }
-        });
-        btn_plus_gauss.setOnClickListener(new View.OnClickListener() {
+        btn_OnOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).setKernel_size(-2);
-            }
-        });
+                MainActivity mainActivity = (MainActivity)getActivity();
+                if ((mainActivity.getStatus() == true)){
+                  //  btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.on));
+                    mainActivity.onOff(false);
+                }
+                else{
+                  //  btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.off));
+                    mainActivity.onOff(true);}
 
-        btn_neg_gauss.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((MainActivity) getActivity()).setKernel_size(2);
             }
-        });*/
+
+        });
     }
-    /**
+      /**
      * Save the image currently being displayed
      */
     public void saveImage(){
@@ -303,7 +234,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             buffer[i] = this.buffer[i].clone();
         }
 
-        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2, buffer));
+        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2, 2, buffer));
         // matrix = ImageManipulation.acquireMedian(buffer);
         // Resize current image
         current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
@@ -314,23 +245,9 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         // Apply absdiff on new img + median image
         ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output,60);
         double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
-        double LIGHT_THRESHOLD = 1.00;
-
-        //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
-        ratioCounter++;
-        //uploadMatrix(saveMatrix(output,1),1);
-        //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
 
         /* Save the relevant matrixes */
-        saveMatrix(absdiff_output,1);
-        saveMatrix(current_low_res_frame,0);
-        saveMatrix(median_matrix,2);
-
-
-        if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
-            uploadMatrix(saveMatrix(current_frame,0),"people in room id:15 ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
-        else if(ratio<LIGHT_THRESHOLD)
-            uploadMatrix(saveMatrix(current_frame,1),"empty room id:15 ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
+        saveImage(ratio);
 
         // Release the created matrix to avoid memory leaks
         median_matrix.release();
@@ -342,147 +259,27 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         buffer = null;
     }
 
-    /**
-     * Save the image currently being displayed
-     */
-    public void saveImageTetes(){
-        Log.d("MAINFRAGMENT","save image");
-        if(this.buffer ==null)
-            return;
-        Mat median_matrix,current_low_res_frame;
-
-        // Acquire medaian image
-        Mat[] buffer = new Mat[this.buffer.length];
-
-        for(int i = 0; i < buffer.length;i++){
-            buffer[i] = this.buffer[i].clone();
-        }
-
-        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2,2, buffer));
-        // matrix = ImageManipulation.acquireMedian(buffer);
-        // Resize current image
-        current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
-        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
-
-        for(int i = 0; i <7;i++) {
-            Mat absdiff_output = new Mat(median_matrix.height(), median_matrix.width(), CvType.CV_8UC1);
-
-            // Apply absdiff on new img + median image
-            ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output, 40 + (i*10));
-            double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
-            double LIGHT_THRESHOLD = 1.00;
-
-            //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
-            ratioCounter++;
-            //uploadMatrix(saveMatrix(output,1),1);
-            //uploadMatrix(saveMatrix(current_low_res_frame,0),0);
-
-        /* Save the relevant matrixes */
-          //  saveMatrix(absdiff_output, 1);
-            //saveMatrix(current_low_res_frame, 0);
-            //saveMatrix(median_matrix, 2);
-
-
-            if (ratio >= PEOPLE_LOW_THRESHOLD && ratio < LIGHT_THRESHOLD)
-                uploadMatrix(saveMatrix(current_frame, i+1), "people in room id:13 ratio:" + ratio, "people_in_room_b"+(40+(i*10))+"_0.1");
-            else if (ratio < LIGHT_THRESHOLD)
-                uploadMatrix(saveMatrix(current_frame, i+1), "empty room id ratio:" + ratio, "empty_room"+(40+(i*10))+"_0.1");
-
-            if(ratio>=0.01&& ratio<LIGHT_THRESHOLD)
-                uploadMatrix(saveMatrix(current_frame, i), "people in id:3 ratio:" + ratio, "people_in_room_b"+(40+(i*10))+"_1");
-            else if (ratio < LIGHT_THRESHOLD)
-                uploadMatrix(saveMatrix(current_frame, i+1), "empty room id:3 ratio:" + ratio, "empty_room"+(40+(i*10))+"_1");
-
-
-            Log.d("MAINFRAGMENT","went through once");
-
-
-            absdiff_output.release();
-        }
-        // Release the created matrix to avoid memory leaks
-        median_matrix.release();
-
-        for (int j = 0; j < buffer.length; j++) {
-            buffer[j].release();
-        }
-        buffer = null;
-    }
-
-    /**
-     * Save the image currently being displayed
-     */
-    public void saveImageTestResize() {
-        int size = 1;
-        Log.d("MAINFRAGMENT", "save image");
-        for(size = 1; size < 8; size++){
-        long startTime = System.currentTimeMillis();
-
-        if (this.buffer == null)
-            return;
-        Mat median_matrix, current_low_res_frame;
-
-        // Acquire medaian image
-        Mat[] buffer = new Mat[this.buffer.length];
-
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = this.buffer[i].clone();
-        }
-
-        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(size, size, buffer));
-        // matrix = ImageManipulation.acquireMedian(buffer);
-        // Resize current image
-        current_low_res_frame = ImageManipulation.resizeImage(size, size, current_frame);
-        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
-
-        Mat absdiff_output = new Mat(median_matrix.height(), median_matrix.width(), CvType.CV_8UC1);
-
-        // Apply absdiff on new img + median image
-        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output,40);
-        double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
-        double LIGHT_THRESHOLD = 1.00;
-
-            this.uploadMatrix(this.saveMatrix(current_low_res_frame,size),"rescale:1","rescale:1");
-
-        //send.sendMessage("ID," + ratioCounter + "\t,Whiteblack ratio,"+ratio);
-        ratioCounter++;
-
-        // Release the created matrix to avoid memory leaks
-        median_matrix.release();
-        absdiff_output.release();
-
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i].release();
-        }
-        buffer = null;
-
-        long stopTime = System.currentTimeMillis();
-        long elapsedTime = stopTime - startTime;
-        Log.d("MainFragment", "time taken for: " + size + "\t" + elapsedTime);
-    }
-    }
-
-    // ------------------------------- Image Handling
     /**
      * Function saving the matrix to the local storage on the device as a .png file
      * @param matrix to save
      * @param code ending of file
      * @return
      */
-    public File saveMatrix(Mat matrix, int code){
+    public File saveMatrix(Mat matrix, int code)
+    {
         Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(matrix, resultBitmap);
 
         Date date = new Date();
-        Log.d("MAINACTIVITY", "code: " + code);
         SimpleDateFormat ft = new SimpleDateFormat ("yyyy/MM/dd_hh:mm:ss");
 
-        String filename = "test"+String.valueOf(code);
+        String filename = "temp";
 
         ContextWrapper cw = new ContextWrapper(getActivity().getApplicationContext());
         // path to /data/data/yourapp/app_data/imageDir
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
         // Create imageDir
-        File file=new File(directory,filename+".png");
+        File file=new File(directory,ft.format(date)+".png");
         FileOutputStream fos = null;
         try
         {
@@ -500,23 +297,45 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         }
         return file;
     }
+
+    private void saveImage(double ratio){
+        Log.d("Mainfragment","choice is: " + MainActivity.choice);
+        if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
+            if(MainActivity.choice == MainActivity.CLOUD)
+                uploadMatrix(saveMatrix(current_frame,0),"people in room ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
+            else
+                saveMatrix(current_frame,0);
+
+        else if(ratio<LIGHT_THRESHOLD)
+            if(MainActivity.choice == MainActivity.CLOUD)
+                uploadMatrix(saveMatrix(current_frame, 1),"empty room ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
+            else
+                saveMatrix(current_frame,1);
+    }
     /**
      * Function used to upload the given matrix to google drive
      * @param file to upload
      * @param tag to add to file ending
      */
-    public void uploadMatrix(File file, String tag, String file_tag){
+    public void uploadMatrix(File file, String tag, String file_tag)
+    {
         Date date = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("yyyy/MM/dd_kk_mm_ss");
         ((MainActivity)getActivity()).uploadFile(file, "filepath", file_tag+"_"+ft.format(date) + "1234", tag);
-
     }
 
+    /**
+     * Sets the timmer for the average buffer that will add a photo to the buffer in a period of time.
+     * @param timer_seconds
+     */
+    public void setTimerMedianfilter(int timer_seconds)
+    {
 
-    public void setTimerMedianfilter(int timer_seconds){
+        Log.d("MainActivity","made it:6");
 
-
-        if(buffert_task!=null) {
+        this.buffer = new Mat[BUFFERT_SIZE];
+        if(buffert_task!=null)
+        {
             buffert_task.cancel();
             buffert_task = null;
         }
@@ -525,7 +344,8 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             buffert_timer.cancel();
             buffert_timer=null;
         }
-        buffert_task = new TimerTask(){
+        buffert_task = new TimerTask()
+        {
             @Override
             public void run(){
                 getActivity().runOnUiThread(new Runnable() {
@@ -538,12 +358,20 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             }
         };
 
-   buffert_timer = new Timer();
-        Log.d("MAINFRAGMENT","Value timer: " +  (timer_seconds / ((double)BUFFERT_SIZE+1)) * 1000);
-        buffert_timer.scheduleAtFixedRate(buffert_task,(long)( (timer_seconds / ((double)BUFFERT_SIZE+1)) * 1000),(long) (timer_seconds / ((double)BUFFERT_SIZE + 1)) * 1000); /// 4
+        Log.d("MainActivity", "made it: 7");
+        buffert_timer = new Timer();
+        buffert_timer.scheduleAtFixedRate(buffert_task, (long) (((double) timer_seconds / (double) BUFFERT_SIZE) * 1000), (long) ((double) timer_seconds / (double) (BUFFERT_SIZE + 1)) * 1000); /// 4
+
+       // if(current_frame!=null)
+         //   addBuffer(current_frame);
+        Log.d("MainActivity", "made it: 9");
     }
 
-    private void gotoOptions(){
+    /**
+     * Go to the Optionfragment
+     */
+    private void gotoOptions()
+    {
         if(this.buffert_task!=null)
             buffert_task.cancel();
         if(buffert_timer!=null)
@@ -552,4 +380,9 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         getView().clearFocus();
         ((MainActivity) getActivity()).changeFragment("option");
     }
+
+    public void releaseCamera(){
+        this.camera_view.disableView();
+    }
 }
+
