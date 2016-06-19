@@ -19,14 +19,8 @@ import java.util.Date;
  * MainActivity
  */
 public class MainActivity extends Cloud {
-    //    ---.---  Camera variables ---.--- //
-    // Used to display footage
-    //CameraBridgeViewBase camera_view;
 
-
-     //    ---.---  Fragment ---.--- //
-
-    private Fragment fragment;
+    //    ---.---  Fragment ---.--- //
     private FragmentManager fragment_Manager;
     private FragmentTransaction fragment_Transaction;
 
@@ -38,20 +32,21 @@ public class MainActivity extends Cloud {
     private int second = 1000;
     private int start_time;
     private int interval;
-   private Thread timer_thread = null;
+    private Thread timer_thread = null;
 
     //On/Off
     private boolean on = false;
 
-    //Clock time
-    private boolean itIsTime = false;
+    //Clock time;
     private String start_clock, end_clock;
-    private Date start, end;
 
+    /**
+     * Start the app and create a Options and Main fragment objects
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Create the fragments
@@ -59,7 +54,7 @@ public class MainActivity extends Cloud {
         main_Fragment = new MainFragment();
         fragment_Manager = getFragmentManager();
         fragment_Transaction = fragment_Manager.beginTransaction();
-        //Load the menufragment to the display
+        //Load the mainfragment to the display
         fragment_Transaction.replace(R.id.fragment_container, main_Fragment);
         fragment_Transaction.commit();
 
@@ -67,21 +62,18 @@ public class MainActivity extends Cloud {
         window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD); // Unlock the device if locked
         window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON); // Turn screen on if off
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // Keep screen on
-
-
-
     }
-// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Fragment xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
+// -------------------------------------- Fragment ---------------------------------------------------
     /**
-     * This method changes between the fragments menu
+     * This method changes between the fragments
      * @param id = the name of the fragment that will be displayed
      */
     public void changeFragment(String id)
     {
-    Log.d("MAINACTIVITY","chane fragment");
+        Log.d("MAINACTIVITY","chane fragment");
         if(id.equals("option"))
         {
+            //Makes sure that no threads are running while changing fragment
             if(timer_thread!=null)
             {
                 timer_thread.interrupt();
@@ -104,9 +96,8 @@ public class MainActivity extends Cloud {
 
     }
 //-----------------------------  Triggers ---------------------------
-
     /**
-     * This method return if the value of the onOff switch
+     * This method return if the value if the application is on or off
      * @return: True if on and false if off
      */
     public boolean getStatus()
@@ -114,7 +105,7 @@ public class MainActivity extends Cloud {
         return on;
     }
     /**
-     * This method is like an on/off switch, which changes the variable "on" to false/true
+     * This method change the variable on to false or true
      */
     public void onOff(boolean b)
     {
@@ -131,24 +122,24 @@ public class MainActivity extends Cloud {
             return true;
         else
         {
+            //Get the time
             Calendar cal = Calendar.getInstance();
+            //Change format to european time (24:00)
             SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
             String current_time = sdf.format(cal.getTime());
-            try{
+            try
+            {
                 Date start = sdf.parse(start_clock);
                 Date end = sdf.parse(end_clock);
                 Date current = sdf.parse(current_time);
                 //If current_time is higher then the start time and lower then the end time, then taking photo is ok.
-                if((current.after(start) && current.before(end))
-                        ||(current.equals(start)||current.equals(end)))
-                    return true;}
-            catch(ParseException e){
-
+                if((current.after(start) && current.before(end)) || (current.equals(start)||current.equals(end)))
+                    return true;
             }
-
+            catch(ParseException e){}
+            //It is not time to take photo
             return false;
         }
-
     }
     /**
      * This method sets the time when the camera should take pictures
@@ -162,26 +153,23 @@ public class MainActivity extends Cloud {
         start_clock = sdf.format(sdf.parse(start));
         end_clock = sdf.format(sdf.parse(end));
     }
-
     /**
      * This method sets the time how often the camera shall save pictures
-     * @param time: The intervall time
+     * @param time_interval: how often the camera will take an image
      * @throws InterruptedException
      */
-    public void setTime(int time) throws InterruptedException
+    public void setTime(int time_interval) throws InterruptedException
     {
-        start_time = time;
-        interval = time;
-
+        start_time = time_interval;
+        interval = time_interval;
         timer_thread = new Thread()
         {
             boolean run = true;
-
             public void run()
             {
                 while(run)
                 {
-                    //Sleep until the interval time has passed
+                    //Wait until the interval time has passed
                     while (interval > 0 && run)
                     {
                         //Decreases the interval time by one second
@@ -190,7 +178,8 @@ public class MainActivity extends Cloud {
                             Thread.sleep(second);
                             interval -= 1;
                             Log.d("init", "Count: " + interval);
-                        } catch (InterruptedException e)
+                        }
+                        catch (InterruptedException e)
                         {
                             e.printStackTrace();
                             run = false;
@@ -205,22 +194,13 @@ public class MainActivity extends Cloud {
                             @Override
                             public void run()
                             {
-
-
-                                Calendar cal = Calendar.getInstance();
-                                SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
-                                String current_time = sdf.format(cal.getTime());
-                                Log.d("MAINACTIVITY","Time start:" + start_clock + "\tTime end:" + end_clock+"\tCurrent_time: "+current_time
-                                +"\nisTrue:"+isItTime());
-                                if(isItTime()&&getStatus()){
-                                   // main_Fragment.saveImageTetes();
+                                if(isItTime()&&getStatus())
+                                {
                                     main_Fragment.saveImage();
-                                    //main_Fragment.saveImageTestResize();
                                     Toast.makeText(MainActivity.this, "Take Photo", Toast.LENGTH_SHORT).show();
                                 }
-                                else{
+                                else
                                     Toast.makeText(MainActivity.this,"Not time to take",Toast.LENGTH_SHORT).show();
-                                }
                             }
                         });
                     }
@@ -228,20 +208,7 @@ public class MainActivity extends Cloud {
             }
         };
         timer_thread.start();
-       main_Fragment.setTimerMedianfilter(time);
+        //Starts the buffer thread
+        main_Fragment.setTimerMedianfilter(time_interval);
     }
-
-    /**
-     * Method used to return a string given the given input
-     * @param people_in_room, boolean value
-     * @return "people" or "empty"
-     */
-    private String getPeopleInRoomText(boolean people_in_room)
-    {
-        if(people_in_room)
-            return "people";
-        else
-            return "empty";
-    }
-
 }

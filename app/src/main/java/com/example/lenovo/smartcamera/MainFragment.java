@@ -56,7 +56,6 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     final int ORIGINAL = 0;
     final int ABSDIFF = 1;
     public static final int BUFFERUPDATESECONDS = 5;
-    private SendInfo send;
     private TimerTask buffert_task;
     private MainFragment frag;
     int counter=-1;
@@ -91,7 +90,6 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         this.older_frame = new Mat();
         this.old_frame = new Mat();
         this.buffer = new Mat[BUFFERT_SIZE];
-        send = new SendInfo();
     }
     /**
      * Adds the given matrix to the buffer and release the last matrix in buffer
