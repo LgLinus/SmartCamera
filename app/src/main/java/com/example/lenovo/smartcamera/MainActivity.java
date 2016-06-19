@@ -30,6 +30,10 @@ public class MainActivity extends Cloud {
 
     private final String PREFS_NAME ="myPrefs";
     private final String KEY_CHOICE = "choice";
+    private final String KEY_INTERVAL = "interval";
+    private final String KEY_START_TIME = "start_time";
+    private final String KEY_END_TIME = "end_time";
+
     public static final int CLOUD = 1;
     public static final int LOCAL = 0;
     //    ---.---  Fragment ---.--- //
@@ -45,7 +49,7 @@ public class MainActivity extends Cloud {
     //Timer interval
     private int second = 1000;
     private int start_time;
-    private int interval;
+    public int interval;
     private Thread timer_thread = null;
 
     //On/Off
@@ -53,7 +57,7 @@ public class MainActivity extends Cloud {
 
     //Clock time
     private boolean itIsTime = false;
-    private String start_clock, end_clock;
+    public String start_clock, end_clock;
     private Date start, end;
 
     public static int choice = -1;
@@ -77,15 +81,21 @@ public class MainActivity extends Cloud {
         window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON); // Turn screen on if off
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // Keep screen on
 
-        checkStorageType();
+        setupPrefs();
 
     }
+    private void setupPrefs(){
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
+        this.end_clock = prefs.getString(this.KEY_END_TIME,"23:59");
+        this.start_clock = prefs.getString(this.KEY_START_TIME,"00:00");
+        this.interval = prefs.getInt(this.KEY_INTERVAL,5);
+        checkStorageType(prefs);
+    }
     /**
      * Checks if the user have chosen a storage type, 0 = Local, 1 = cloud
      */
-    private void checkStorageType(){
-        SharedPreferences prefs = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    private void checkStorageType(SharedPreferences prefs){
 
         int choice = prefs.getInt(KEY_CHOICE,-1);
         this.choice = choice;
@@ -122,7 +132,7 @@ public class MainActivity extends Cloud {
                 editor.commit();
                 choice = CLOUD;
                 dialog.cancel();
-                Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
                 finish();
             }
@@ -156,6 +166,13 @@ public class MainActivity extends Cloud {
         }
         else if(id.equals("main"))
         {
+            SharedPreferences prefs = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor edit = prefs.edit();
+
+            edit.putString(this.KEY_START_TIME,this.start_clock);
+            edit.putString(this.KEY_END_TIME,this.end_clock);
+            edit.putInt(this.KEY_INTERVAL,this.interval);
+            edit.commit();
             fragment_Manager = getFragmentManager();
             fragment_Transaction = fragment_Manager.beginTransaction();
             fragment_Transaction.replace(R.id.fragment_container, main_Fragment);

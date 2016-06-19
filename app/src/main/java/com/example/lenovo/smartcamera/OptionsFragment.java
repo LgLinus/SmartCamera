@@ -38,16 +38,10 @@ public class OptionsFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         view = inflater.inflate(R.layout.fragment_option, container,false);
-        initiateListeners(view);
         et_i  = (EditText) view.findViewById(R.id.interval_text);
         et_s = (EditText) view.findViewById(R.id.start_text);
         et_e = (EditText) view.findViewById(R.id.end_text);
-        et_i.clearFocus();
-        et_s.clearFocus();
-        et_e.clearFocus();
-
-        et_i.setSelectAllOnFocus(true);
-        et_i.requestFocus();
+         initiateListeners(view);
 
         return view;
     }
@@ -56,9 +50,14 @@ public class OptionsFragment extends Fragment
     }
     private void initiateListeners(final View rootView)
     {
+        MainActivity mainActivity = (MainActivity)getActivity();
         btn_back = (ImageButton) rootView.findViewById(R.id.btn_back);
         cb_storage = (CheckBox) rootView.findViewById(R.id.cb_storage);
         btn_confirm = (Button)rootView.findViewById(R.id.btn_confirm);
+
+        et_s.setText(mainActivity.start_clock);
+        et_e.setText(mainActivity.end_clock);
+        et_i.setText(""+mainActivity.interval);
 
         if(((MainActivity)getActivity()).getCloudStorage()==MainActivity.CLOUD)
             cb_storage.setChecked(true);
@@ -106,6 +105,9 @@ public class OptionsFragment extends Fragment
                 int interval = Integer.parseInt(et_i.getText().toString());
                 mainActivity.setTime(interval);
             }
+            else
+                throw new Exception();
+
             if(cb_storage.isChecked())
                 mainActivity.setCloudStorage(true);
             else
