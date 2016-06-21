@@ -279,7 +279,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         // path to /data/data/yourapp/app_data/imageDir
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
         // Create imageDir
-        File file=new File(directory,ft.format(date)+".png");
+        File file=new File(directory,"bcde"+".png");
         FileOutputStream fos = null;
         try
         {
