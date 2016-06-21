@@ -3,11 +3,4 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.lenovo.smartcamera.MainActivity">
 
-    <item
-        android:id="@+id/option"
-        android:title="@string/option"
-        android:orderInCategory="200"
-        android:icon="@drawable/icon_options"
-        app:showAsAction="ifRoom"
-        />
 </menu>

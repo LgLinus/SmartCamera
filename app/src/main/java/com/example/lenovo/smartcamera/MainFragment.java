@@ -23,8 +23,10 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
@@ -41,23 +43,11 @@ import java.util.TimerTask;
  */
 public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCameraViewListener2
 {
-    public static boolean CLOUD = true;
-    private ImageButton btn_Option;
+    private Button btn_Capture;
     private View view;
-    private Timer buffert_timer;
-    Mat current_frame = null;
-    Mat old_frame,older_frame;
-    Mat output_frame;
-    Mat fg,bg;
-    private int BUFFERT_SIZE = 2;
-    Mat[] buffer;
-    private TimerTask buffert_task;
     private MainFragment frag;
-    double LIGHT_THRESHOLD = 0.85;
+    private Mat captured_frame,current_frame;
     CameraBridgeViewBase camera_view;
-
-    final double PEOPLE_LOW_THRESHOLD = 0.001;
-    ImageButton btn_OnOff;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -77,42 +67,8 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     public void onCameraViewStarted(int width, int height)
     {
         Log.d("camerastart","camerastarted");
-        this.output_frame = new Mat(width,height, CvType.CV_8U);
-        this.bg = new Mat(width,height, CvType.CV_8U);
-        this.fg = new Mat();
-        this.older_frame = new Mat();
-        this.old_frame = new Mat();
-    }
-    /**
-     * Adds an image to the buffer and release the last image in buffer
-     * @param matrix: The image that will be added.
-     */
-    public void addBuffer(Mat matrix)
-    {
-        if(matrix==null)
-            return;
-        //Buffer is empty
-        if(buffer ==null)
-        {
-            buffer= new Mat[BUFFERT_SIZE];
-            return;
-        }
-        // IF there is no image :(
-        else if(matrix==null)
-            return;
-
-        //If the buffer is full, release the last image
-        if(buffer[BUFFERT_SIZE-1]!=null)
-            buffer[BUFFERT_SIZE-1].release();
-
-        //Moves all the images one step in the buffer
-        for(int i = BUFFERT_SIZE-2;i>-1;i--)
-            buffer[i+1] = buffer[i];
-
-        Mat toAdd = matrix.clone();
-        Imgproc.cvtColor(toAdd, toAdd, Imgproc.COLOR_BGR2GRAY);
-
-        buffer[0] = toAdd;
+        this.captured_frame = new Mat(width,height, CvType.CV_8U);
+        this.current_frame = new Mat(width,height,CvType.CV_8U);
     }
 
     public void onCameraViewStopped() {}
@@ -125,16 +81,15 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        //Give the image colors
+        // Avoid memory leaks
+        if(current_frame!=null)
+            current_frame.release();
+
         current_frame = inputFrame.rgba();
-
-        if(output_frame!=null)
-            output_frame.release();
-
-
-        output_frame = current_frame.clone();
-        //The this image will be put the the mainfragment JCameraField
-        return output_frame;
+        Mat rot_matrix = Imgproc.getRotationMatrix2D(new Point(current_frame.cols()/2.0f,current_frame.rows()/2.0f),90,1.0);
+        int val = Math.max(current_frame.cols(),current_frame.rows());
+        Imgproc.warpAffine(current_frame,current_frame,rot_matrix,new Size(val,val));
+        return current_frame;
     }
     @Override
     public void onResume()
@@ -163,8 +118,8 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
                 {
                     Log.d("init", "OpenCV loaded successfully");
                     // Load native libs after OpenCV initialization
+                    camera_view.setRotation((float)((1*Math.PI)/2));
                     camera_view.enableView();
-
                     // Make the cameraview visible
                     camera_view.setVisibility(SurfaceView.VISIBLE);
                     camera_view.setCvCameraViewListener(frag);
@@ -173,14 +128,6 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             }
         }
     };
-    /**
-     * Change Fragment
-     * @param view
-     */
-    public void optionMenu(View view)
-    {
-        ((MainActivity)getActivity()).changeFragment("option");
-    }
 
     /**
      * Initiate listeners
@@ -188,32 +135,13 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
      */
     private void initiateListeners(View rootView)
     {
-        btn_Option = (ImageButton) rootView.findViewById(R.id.btn_Option);
-        btn_OnOff = (ImageButton) rootView.findViewById(R.id.btn_OnOff);
-
+        btn_Capture = (Button) rootView.findViewById(R.id.btn_capture);
         camera_view = (CameraBridgeViewBase)rootView.findViewById(R.id.camera_view);
-
-        btn_Option.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                gotoOptions();
-            }
-
-        });
-        btn_OnOff.setOnClickListener(new View.OnClickListener() {
+        btn_Capture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MainActivity mainActivity = (MainActivity)getActivity();
-                if ((mainActivity.getStatus() == true)){
-                  //  btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.on));
-                    mainActivity.onOff(false);
-                }
-                else{
-                  //  btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.off));
-                    mainActivity.onOff(true);}
-
+                MainActivity mainActivity = (MainActivity) getActivity();
+                saveImage();
             }
 
         });
@@ -223,49 +151,24 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
      */
     public void saveImage(){
         Log.d("MAINFRAGMENT","save image");
-        if(this.buffer ==null)
+        this.captured_frame = current_frame.clone();
+
+        this.captured_frame = ImageManipulation.resizeImage_Size(224,224,captured_frame);
+
+        if(captured_frame==null||captured_frame.width()<1||captured_frame.height()<1)
             return;
-        Mat median_matrix,current_low_res_frame;
 
-        // Acquire medaian image
-        Mat[] buffer = new Mat[this.buffer.length];
+        uploadMatrix(saveMatrix(captured_frame), "test", "filename_temp");
 
-        for(int i = 0; i < buffer.length;i++){
-            buffer[i] = this.buffer[i].clone();
-        }
 
-        median_matrix = ImageManipulation.acquireMedian(ImageManipulation.resizeImage(2, 2, buffer));
-        // matrix = ImageManipulation.acquireMedian(buffer);
-        // Resize current image
-        current_low_res_frame = ImageManipulation.resizeImage(2, 2, current_frame);
-        Imgproc.cvtColor(current_low_res_frame, current_low_res_frame, Imgproc.COLOR_BGR2GRAY);
-
-        Mat absdiff_output = new Mat(median_matrix.height(),median_matrix.width(), CvType.CV_8UC1);
-
-        // Apply absdiff on new img + median image
-        ImageManipulation.useAbsDiff(median_matrix, current_low_res_frame, absdiff_output,60);
-        double ratio = ImageManipulation.whiteBlackRatio(absdiff_output);
-
-        /* Save the relevant matrixes */
-        saveImage(ratio);
-
-        // Release the created matrix to avoid memory leaks
-        median_matrix.release();
-        absdiff_output.release();
-
-        for(int i = 0; i < buffer.length;i++){
-            buffer[i].release();
-        }
-        buffer = null;
     }
 
     /**
      * Function saving the matrix to the local storage on the device as a .png file
      * @param matrix to save
-     * @param code ending of file
      * @return
      */
-    public File saveMatrix(Mat matrix, int code)
+    public File saveMatrix(Mat matrix)
     {
         Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(matrix, resultBitmap);
@@ -287,7 +190,8 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             // Use the compress method on the BitMap object to write image to the OutputStream
             resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.close();
-            MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), resultBitmap, filename+".png", "xaxa");
+            MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), resultBitmap, filename + ".png", "xaxa");
+            matrix.release();
         } catch (Exception e)
         {
             e.printStackTrace();
@@ -295,22 +199,8 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         {
 
         }
+
         return file;
-    }
-
-    private void saveImage(double ratio){
-        Log.d("Mainfragment","choice is: " + MainActivity.choice);
-        if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
-            if(MainActivity.choice == MainActivity.CLOUD)
-                uploadMatrix(saveMatrix(current_frame,0),"people in room ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
-            else
-                saveMatrix(current_frame,0);
-
-        else if(ratio<LIGHT_THRESHOLD)
-            if(MainActivity.choice == MainActivity.CLOUD)
-                uploadMatrix(saveMatrix(current_frame, 1),"empty room ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
-            else
-                saveMatrix(current_frame,1);
     }
     /**
      * Function used to upload the given matrix to google drive
@@ -321,65 +211,9 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     {
         Date date = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("yyyy/MM/dd_kk_mm_ss");
-        ((MainActivity)getActivity()).uploadFile(file, "filepath", file_tag+"_"+ft.format(date) + "1234", tag);
+        ((MainActivity) getActivity()).uploadFile(file, "filepath", file_tag + "_" + ft.format(date) + "1234", tag);
     }
 
-    /**
-     * Sets the timmer for the average buffer that will add a photo to the buffer in a period of time.
-     * @param timer_seconds
-     */
-    public void setTimerMedianfilter(int timer_seconds)
-    {
-
-        Log.d("MainActivity","made it:6");
-
-        this.buffer = new Mat[BUFFERT_SIZE];
-        if(buffert_task!=null)
-        {
-            buffert_task.cancel();
-            buffert_task = null;
-        }
-        if(buffert_timer!=null)
-        {
-            buffert_timer.cancel();
-            buffert_timer=null;
-        }
-        buffert_task = new TimerTask()
-        {
-            @Override
-            public void run(){
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        addBuffer(current_frame);
-                        Log.d("MAINACTIVITY", "added image to buffer");
-                    }
-                });
-            }
-        };
-
-        Log.d("MainActivity", "made it: 7");
-        buffert_timer = new Timer();
-        buffert_timer.scheduleAtFixedRate(buffert_task, (long) (((double) timer_seconds / (double) BUFFERT_SIZE) * 1000), (long) ((double) timer_seconds / (double) (BUFFERT_SIZE + 1)) * 1000); /// 4
-
-       // if(current_frame!=null)
-         //   addBuffer(current_frame);
-        Log.d("MainActivity", "made it: 9");
-    }
-
-    /**
-     * Go to the Optionfragment
-     */
-    private void gotoOptions()
-    {
-        if(this.buffert_task!=null)
-            buffert_task.cancel();
-        if(buffert_timer!=null)
-            buffert_timer.cancel();
-
-        getView().clearFocus();
-        ((MainActivity) getActivity()).changeFragment("option");
-    }
 
     public void releaseCamera(){
         this.camera_view.disableView();

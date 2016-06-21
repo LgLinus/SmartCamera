@@ -1,83 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-
+    android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="#ffffff"
+    android:background="#000000"
     tools:context="com.example.lenovo.smartcamera.MainFragment">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="fill_parent"
-            android:layout_height="60dp"
-            android:weightSum="1"
-            android:background="#000000">
-
-            <ImageButton
-                android:layout_width="80dp"
-                android:layout_height="match_parent"
-                android:id="@+id/btn_Option"
-                android:src="@drawable/icon_options"
-                android:scaleType="fitCenter"
-                android:background="#010101"
-                />
-
-            <TextView
-                android:layout_width="110dp"
-                android:layout_height="match_parent"
-                android:text="Options"
-                android:textSize="20dp"
-                android:id="@+id/options_text"
-                android:gravity="center"
-                android:textColor="#ffffff" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="138dp"
-            android:id="@+id/color_layout"
-            android:background="#000000">
-
-
-            <ImageButton
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:id="@+id/btn_OnOff"
-                android:layout_gravity="center_vertical"
-                android:scaleType="fitCenter"
-                android:background="@drawable/off" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="fill_parent"
-            android:layout_height="481dp"
-            android:weightSum="1">
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="New Button"
-                android:id="@+id/button"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="0.35" />
-
+    <Button
+        android:text="Take photo"
+        android:id="@+id/btn_capture"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"/>
             <org.opencv.android.JavaCameraView
                 android:layout_width="fill_parent"
                 android:layout_height="311dp"
                 android:id="@+id/camera_view"
                 android:layout_weight="0.35" />
-        </LinearLayout>
 
-    </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>
