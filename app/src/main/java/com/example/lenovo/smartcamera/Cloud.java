@@ -1,6 +1,5 @@
 package com.example.lenovo.smartcamera;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -166,7 +165,7 @@ GoogleApiClient.OnConnectionFailedListener {
                     else{
                         //showMessage("Folder not found, creating it");
                         DriveFolder parent = Drive.DriveApi.getRootFolder(mGoogleApiClient);
-                        createFolders(folder,parent);
+                        createFolders(folder, parent);
                     }
                 }
             };
@@ -211,6 +210,9 @@ GoogleApiClient.OnConnectionFailedListener {
      */
     public void uploadFile(File file, String path, String name, String label) {
         fileDetails = new FileDetails(file, path, name + ".png", label);
+        DriveFolder parent = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+        this.folder = path;
+        this.folder_exists(this.folder, parent);
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(driveContentsCallback);
     }
