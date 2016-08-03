@@ -1,5 +1,6 @@
 package com.example.lenovo.smartcamera;
 
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import java.io.File;
@@ -11,7 +12,7 @@ import java.io.File;
 public class FileDetails
 {
     private String file_name;
-    private File file;
+    private Bitmap file;
     private String path;
     private String label;
     /**
@@ -21,7 +22,7 @@ public class FileDetails
      * @param name name of file to upload
      * @param label tag for the image
      */
-    public FileDetails(File file, String path, String name, String label)
+    public FileDetails(Bitmap file, String path, String name, String label)
     {
         this.file = file;
         this.path = path;
@@ -37,7 +38,7 @@ public class FileDetails
         return this.file_name;
     }
 
-    public File getFile(){
+    public Bitmap getFile(){
         return this.file;
     }
 

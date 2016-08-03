@@ -3,6 +3,7 @@ package com.example.lenovo.smartcamera;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -23,6 +24,8 @@ import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 
+import org.opencv.core.Mat;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -41,6 +44,7 @@ GoogleApiClient.OnConnectionFailedListener {
     private static String folder = "Test_folder_2";
     private static final String TAG = "Drive_class";
     private static DriveFolder parent_folder;
+    private Bitmap bitmapUpload;
 
 
     /**
@@ -205,12 +209,13 @@ GoogleApiClient.OnConnectionFailedListener {
     /**
      * Uploads the given file to the drive
      *
-     * @param file  to upload
+     * @param upload  to upload
      * @param name  filename
      * @param label description
      */
-    public void uploadFile(File file, String path, String name, String label) {
-        fileDetails = new FileDetails(file, path, name + ".png", label);
+    public void uploadFile(Bitmap upload, String path, String name, String label) {
+        this.bitmapUpload = upload;
+        fileDetails = new FileDetails(upload, path, name + ".png", label);
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(driveContentsCallback);
     }
@@ -251,15 +256,8 @@ GoogleApiClient.OnConnectionFailedListener {
 
                             try {
 
-                                FileInputStream is = new FileInputStream(fileDetails.getFile());
-                                byte[] buf = new byte[1024];
-                                int bytesRead;
-                                while ((bytesRead = is.read(buf)) > 0) {
-                                    outputStream.write(buf, 0, bytesRead);
-                                }
-
+                                bitmapUpload.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                                 outputStream.close();
-                                is.close();
                             } catch (IOException e) {
                                 Log.e(TAG, e.getMessage());
                             }

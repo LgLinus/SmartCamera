@@ -115,7 +115,9 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         buffer[0] = toAdd;
     }
 
-    public void onCameraViewStopped() {}
+    public void onCameraViewStopped(){
+       // releaseCamera();
+    }
 
     /**
      * This method take pictures
@@ -164,7 +166,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
                     Log.d("init", "OpenCV loaded successfully");
                     // Load native libs after OpenCV initialization
                     camera_view.enableView();
-
+                    Log.d("TAGISHBIGISH","TAGISHBIGISH");
                     // Make the cameraview visible
                     camera_view.setVisibility(SurfaceView.VISIBLE);
                     camera_view.setCvCameraViewListener(frag);
@@ -181,7 +183,27 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     {
         ((MainActivity)getActivity()).changeFragment("option");
     }
-
+/*
+    public void changeStatus(View rv)
+    {
+        TextView text_view;
+        LinearLayout ll;
+        ll = (LinearLayout) rv.findViewById(R.id.color_layout);
+        text_view = (TextView) rv.findViewById(R.id.text_status);
+        if(((MainActivity)getActivity()).getStatus())
+        {
+            ll.setBackgroundColor(Color.GREEN);
+            text_view.setText("On");
+            Toast.makeText(((MainActivity) getActivity()), "On", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            ll.setBackgroundColor(Color.RED);
+            text_view.setText("Off");
+            Toast.makeText(((MainActivity) getActivity()), "Off", Toast.LENGTH_SHORT).show();
+        }
+    }
+*/
     /**
      * Initiate listeners
      * @param rootView
@@ -207,16 +229,17 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
             public void onClick(View v) {
                 MainActivity mainActivity = (MainActivity)getActivity();
                 if ((mainActivity.getStatus() == true)){
-                  //  btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.on));
+                    btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.off));
                     mainActivity.onOff(false);
                 }
                 else{
-                  //  btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.off));
+                    btn_OnOff.setBackground(getActivity().getApplicationContext().getResources().getDrawable(R.drawable.on));
                     mainActivity.onOff(true);}
 
             }
 
         });
+
     }
       /**
      * Save the image currently being displayed
@@ -259,7 +282,7 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
         buffer = null;
     }
 
-    /**
+    /*
      * Function saving the matrix to the local storage on the device as a .png file
      * @param matrix to save
      * @param code ending of file
@@ -299,29 +322,32 @@ public class MainFragment extends Fragment  implements CameraBridgeViewBase.CvCa
     }
 
     private void saveImage(double ratio){
-        Log.d("Mainfragment","choice is: " + MainActivity.choice);
+        Log.d("Mainfragment", "choice is: " + MainActivity.choice);
         if(ratio>=PEOPLE_LOW_THRESHOLD && ratio <LIGHT_THRESHOLD)
             if(MainActivity.choice == MainActivity.CLOUD)
-                uploadMatrix(saveMatrix(current_frame,0),"people in room ratio:"+ratio,"people_in_room"+"_ratio:"+ratio);
+                uploadMatrix(current_frame,"people in room ratio ","people_in_room"+"_ratio");
             else
                 saveMatrix(current_frame,0);
 
         else if(ratio<LIGHT_THRESHOLD)
             if(MainActivity.choice == MainActivity.CLOUD)
-                uploadMatrix(saveMatrix(current_frame, 1),"empty room ratio:"+ratio,"empty_room"+"_ratio:"+ratio);
+                uploadMatrix(current_frame,"empty room ","empty_room");
             else
                 saveMatrix(current_frame,1);
     }
     /**
      * Function used to upload the given matrix to google drive
-     * @param file to upload
+     * @param matrix to upload
      * @param tag to add to file ending
      */
-    public void uploadMatrix(File file, String tag, String file_tag)
+    public void uploadMatrix(Mat matrix, String tag, String file_tag)
     {
         Date date = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("yyyy/MM/dd_kk_mm_ss");
-        ((MainActivity)getActivity()).uploadFile(file, "filepath", file_tag+"_"+ft.format(date) + "1234", tag);
+        Bitmap resultBitmap = Bitmap.createBitmap(matrix.cols(),matrix.rows(),Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(matrix, resultBitmap);
+
+        ((MainActivity)getActivity()).uploadFile(resultBitmap,"filepath", file_tag+"_"+ft.format(date) + "1234", tag);
     }
 
     /**

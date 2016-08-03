@@ -184,7 +184,7 @@ public class MainActivity extends Cloud {
     @Override
     protected void onPause(){
         super.onPause();
-        this.main_Fragment.releaseCamera();
+        //this.main_Fragment.releaseCamera();
     }
 //-----------------------------  Triggers ---------------------------
 

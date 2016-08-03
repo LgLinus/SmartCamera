@@ -113,8 +113,8 @@ public class OptionsFragment extends Fragment
             else
                 mainActivity.setCloudStorage(false);
 
+            mainActivity.onOff(false);
             mainActivity.changeFragment("main");
-            mainActivity.onOff(true);
         }
         catch(Exception e)
         {
